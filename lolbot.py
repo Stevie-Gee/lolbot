@@ -92,20 +92,35 @@ def websocket_connect():
 
 def main():
     """Main function - connect to server, start plugins."""
+    global SEQ_NO
+    
     # Logging init
     logging.config.dictConfig(config.LOGGING_CONFIG)
     logging.debug("foo")
     
-    # Connect to server
+    # Connect to server, login
     websocket_connect()
     
-    # TODO: Replace this with a real main loop
-    while True:
-        try:
-            logging.debug("websocket recv %s", _WEBSOCKET.recv())
-        except websocket.WebSocketException:
-            logging.debug("No read")
-            time.sleep(1)
+    # Main read loop
+    _WEBSOCKET.timeout = None
+    try:
+        while True:
+            # Wait for incoming message
+            incoming = _WEBSOCKET.recv()
+            logging.debug("websocket recv: %s", incoming)
+            msg = json.loads(incoming)
+            
+            # Update heartbeat number
+            if msg.get("s"):
+                SEQ_NO = int(msg.get("s"))
+            
+            # TODO: Pass to plugins
+            pass
+    except Exception as err:
+        logging.error("Unexpected error: %s %s", type(err), err)
+    finally:
+        # Explicitly disconnect when this process terminates
+        _WEBSOCKET.close()
 
 if __name__ == '__main__':
     main()
