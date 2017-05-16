@@ -2,6 +2,8 @@
 
 """Discord bot"""
 
+from __future__ import division, print_function
+
 import json
 import logging
 import logging.config
@@ -21,7 +23,7 @@ SEQ_NO = 0
 _WEBSOCKET = None
 
 def heartbeater(interval):
-    """Loop forever, sending heartbeats."""
+    """Loop forever, sending heartbeats. `interval` is in seconds."""
     while True:
         time.sleep(interval)
         socket_send({"op": 1, "d": SEQ_NO})
@@ -59,7 +61,8 @@ def websocket_connect():
     if not temp:
         logging.error("No welcome message received from websocket")
         raise RuntimeError("No welcome message received from websocket")
-    hbi = int(json.loads(temp)["d"]["heartbeat_interval"]) // 10000   # Round to nearest second
+    logging.debug("Socket recv: %s", temp)
+    hbi = int(json.loads(temp)["d"]["heartbeat_interval"]) // 1000  # Round to nearest second
     
     # TOOD: Login
     
