@@ -2,8 +2,11 @@
 Config/settings file used by lolbot.
 """
 
+# Timeout duration for websocket operations
+WS_TIMEOUT = 3
+
 # Logging config
-logging_config = {
+LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': { 
