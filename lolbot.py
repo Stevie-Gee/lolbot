@@ -159,7 +159,6 @@ def main():
     
     # Logging init
     logging.config.dictConfig(config.LOGGING_CONFIG)
-    logging.debug("foo")
     
     # Connect to server, login
     websocket_connect()
