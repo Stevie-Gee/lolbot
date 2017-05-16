@@ -2,6 +2,9 @@
 Config/settings file used by lolbot.
 """
 
+# Discord bot token - your "App Bot Token" goes here
+BOT_TOKEN = ""
+
 # Timeout duration for websocket operations
 WS_TIMEOUT = 3
 

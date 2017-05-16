@@ -61,10 +61,29 @@ def websocket_connect():
     if not temp:
         logging.error("No welcome message received from websocket")
         raise RuntimeError("No welcome message received from websocket")
-    logging.debug("Socket recv: %s", temp)
+    logging.debug("websocket recv: %s", temp)
     hbi = int(json.loads(temp)["d"]["heartbeat_interval"]) // 1000  # Round to nearest second
     
-    # TOOD: Login
+    # Login
+    if not config.BOT_TOKEN:
+        logging.error("You haven't provided a valid Discord bot token")
+        raise RuntimeError("You haven't provided a valid Discord bot token")
+    logging.debug("Sending login")
+    socket_send({
+        "op": 2,
+        "d": {
+            "token": config.BOT_TOKEN,
+            "properties": {
+                "$os": "linux",
+                "$browser": "Disgordian",
+                "$device": "Disgordian",
+                "$referrer": "",
+                "$referring_domain": ""
+            },
+            "compress": False,
+            "large_threshold": 250,
+            "shard": [0, 1]
+        }})
     
     # Start heatbeater thread
     th = threading.Thread(target=heartbeater, args=[hbi])
@@ -80,9 +99,10 @@ def main():
     # Connect to server
     websocket_connect()
     
+    # TODO: Replace this with a real main loop
     while True:
         try:
-            logging.debug("Recv %s", _WEBSOCKET.recv())
+            logging.debug("websocket recv %s", _WEBSOCKET.recv())
         except websocket.WebSocketException:
             logging.debug("No read")
             time.sleep(1)
