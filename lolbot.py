@@ -48,7 +48,7 @@ def websocket_connect():
     ws_url = requests.get(config.BASE_URL + "/gateway").json()['url']
     
     # Connect to server
-    logging.debug("Connecting to websocket server at %s...", ws_url)
+    logging.info("Connecting to websocket server at %s ...", ws_url + config.GATEWAY_VERSION)
     _WEBSOCKET = websocket.create_connection(
         ws_url + config.GATEWAY_VERSION,
         timeout=config.WS_TIMEOUT,
@@ -68,7 +68,7 @@ def websocket_connect():
     if not config.BOT_TOKEN:
         logging.error("You haven't provided a valid Discord bot token")
         raise RuntimeError("You haven't provided a valid Discord bot token")
-    logging.debug("Sending login")
+    logging.info("Sending login...")
     socket_send({
         "op": 2,
         "d": {
