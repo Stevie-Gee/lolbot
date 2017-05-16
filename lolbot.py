@@ -66,8 +66,8 @@ def websocket_connect():
     
     # Login
     if not config.BOT_TOKEN:
-        logging.error("You haven't provided a valid Discord bot token")
-        raise RuntimeError("You haven't provided a valid Discord bot token")
+        logging.error("You haven't provided a valid Discord bot token, please edit config.py")
+        raise RuntimeError("You haven't provided a valid Discord bot token, please edit config.py")
     logging.info("Sending login...")
     socket_send({
         "op": 2,
@@ -85,7 +85,7 @@ def websocket_connect():
             "shard": [0, 1]
         }})
     
-    # Start heatbeater thread
+    # Start heartbeater thread
     th = threading.Thread(target=heartbeater, args=[hbi])
     th.setDaemon(True)
     th.start()
@@ -116,6 +116,9 @@ def main():
             
             # TODO: Pass to plugins
             pass
+    
+    except websocket.WebSocketException:
+        logging.error("Websocket closed unexpectedly: %s %s", type(err), err)
     except Exception as err:
         logging.error("Unexpected error: %s %s", type(err), err)
     finally:
