@@ -20,8 +20,7 @@ def process_msg(msg):
         
         channel_id = msg.get("d").get("channel_id")
         logging.debug("Send %s", reply)
-        requests.post(
-            "{0}/channels/{1}/messages".format(config.BASE_URL, channel_id),
-            headers = {"Authorization": "Bot "+config.BOT_TOKEN},
+        config.HTTP_SESSION.post(
+            "/channels/{0}/messages".format(channel_id),
             json={"content": reply},
             )
