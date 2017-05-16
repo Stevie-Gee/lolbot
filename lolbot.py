@@ -36,8 +36,8 @@ def socket_send(msg):
     complete Discord API message.
     """
     logging.debug("websocket send: %s", msg)
-    if isinstance(msg, dict):
-        msg = str(msg)
+    if not isinstance(msg, basestring):
+        msg = json.dumps(msg)
     with _SOCK_LOCK:
         _WEBSOCKET.send(msg)
 
