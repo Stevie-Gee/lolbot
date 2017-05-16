@@ -35,3 +35,13 @@ LOGGING_CONFIG = {
         },
     },
 }
+
+#######################################################################
+# The variables below are part of discord's API
+# You will probably never need to change these
+#######################################################################
+# Base URL for the REST api
+BASE_URL = "https://discordapp.com/api"
+
+# What version of the gateway protocol do we speak?
+GATEWAY_VERSION = "?v=5&encoding=json"
