@@ -5,24 +5,24 @@ Basic ping/pong responder
 import logging
 import config
 
-#def process_msg(msg):
-#    if msg.get("t") == "MESSAGE_CREATE":
-#        content = msg.get("d").get("content")
-#        # Respond to !ping with !pong
-#        if content == "!ping":
-#            reply = "!pong"
-#        # If the !ping has content attached, match this content in the output
-#        elif content.startswith("!ping "):
-#            reply = "!pong " + msg.get("d").get("content")[6:]
-#        else:
-#            return
-#        
-#        channel_id = msg.get("d").get("channel_id")
-#        logging.debug("Send %s", reply)
-#        config.HTTP_SESSION.post(
-#            "/channels/{0}/messages".format(channel_id),
-#            json={"content": reply},
-#            )
+def handle(msg):
+    if msg.get("t") == "MESSAGE_CREATE":
+        content = msg.get("d").get("content")
+        # Respond to !ping with !pong
+        if content == "!foo":
+            reply = "!bar"
+        # If the !ping has content attached, match this content in the output
+        elif content.startswith("!foo "):
+            reply = "!bar " + msg.get("d").get("content").split(' ')[1]
+        else:
+            return
+        
+        channel_id = msg.get("d").get("channel_id")
+        logging.debug("Send %s", reply)
+        config.HTTP_SESSION.post(
+            "/channels/{0}/messages".format(channel_id),
+            json={"content": reply},
+            )
 
 # Commands as a dict
 def command(msg):

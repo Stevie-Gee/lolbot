@@ -7,8 +7,6 @@ from __future__ import division, print_function
 import json
 import logging
 import logging.config
-import os
-import sys
 import threading
 import time
 
@@ -51,56 +49,6 @@ def heartbeater(interval):
     while True:
         time.sleep(interval)
         socket_send({"op": 1, "d": SEQ_NO})
-
-def load_plugins(directory):
-    """
-    Load all modules from the given directory, then return an array
-    of all the modules with a `process_msg` function.
-    """
-    # TODO: Merge this function with the 'plugin_handler' module
-    pluglist = []
-    commlist = {}
-    files = os.listdir(directory)
-    for fname in files:
-        # Recursively load directories
-        if os.path.isdir(os.path.join(directory, fname)):
-            ptemp, ctemp = load_plugins(os.path.join(directory, fname))
-            pluglist += ptemp
-            commlist.update(ctemp)
-            continue
-        # Convert files to python module names
-        elif fname.endswith('.py') and not fname.startswith('_'):
-            modulename = "%s.%s" % (directory.replace('/', '.'),
-                                    fname.rsplit('.py', 1)[0])
-        # Find loadable packages too, ignore the root-level plugins dir
-        elif fname == '__init__.py' and directory != "plugins":
-            modulename = directory.replace('/', '.')
-        # Ignore all other files
-        else:
-            logging.debug("Ignore %s", fname)
-            continue
-        
-        # Import+reload the module
-        logging.info("Found module '%s'", modulename)
-        try:
-            __import__(modulename)
-            module = sys.modules[modulename]
-            reload(module)
-        except Exception as err:
-            logging.warn("Failed to load module %s: %s %s", modulename, type(err), err)
-            continue
-        
-        # TODO: Handle errors gracefully
-        # Note which modules have generic message handling
-        if getattr(module, "process_msg", None):
-            logging.info("Loaded plugin %s", module)
-            pluglist.append(module)
-        # Note which modules provide commands
-        if getattr(module, "COMMANDS", None):
-            for keyword, function in  module.COMMANDS.iteritems():
-                logging.info("Storing command %s", keyword)
-                commlist[keyword] = function
-    return pluglist, commlist
 
 _SOCK_LOCK = threading.RLock()
 def socket_send(msg):
@@ -178,8 +126,7 @@ def main():
     config.HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
     
     # Initialise plugins from the "plugins" directory
-    pluglist, plugin_handler.COMMANDS = load_plugins("plugins")
-    pluglist.append(plugin_handler)
+    plugin_handler.load("plugins")
     
     # Main read loop
     _WEBSOCKET.timeout = None
@@ -196,10 +143,7 @@ def main():
                 SEQ_NO = int(msg.get("s"))
             
             # Pass to plugins
-            for plug in pluglist:
-                th = threading.Thread(target=plug.process_msg, args=[msg])
-                th.setDaemon(True)
-                th.start()
+            plugin_handler.handle(msg)
     
     except websocket.WebSocketException:
         logging.error("Websocket closed unexpectedly: %s %s", type(err), err)
