@@ -17,6 +17,41 @@ PLUGINS = []
 
 # TODO: Implement a !help function
 
+def do_command(msg):
+    """Check if we need to call a keyword-style command."""
+    # If this isn't a spoken chat message, ignore it
+    if msg.get("t") != "MESSAGE_CREATE":
+        return
+    
+    # If the message doesn't begin with our command char, ignore it
+    content = msg.get("d").get("content")
+    if not content.startswith(config.COMMAND_CHAR):
+        return
+    
+    # Remove the command prefix from the message
+    content = content[len(config.COMMAND_CHAR):]
+    
+    # Do we have args for this command?
+    if ' ' in content:
+        content = content.split(' ', 1)[0]
+    
+    # Normalise case
+    content = content.lower()
+    
+    # Is the command recognised? If so, call it
+    if content in COMMANDS:
+        COMMANDS[content](msg)
+# Add this to the plugins list
+PLUGINS.append(do_command)
+
+def handle(msg):
+    """Distribute a received message to all relevant plugins."""
+    # TODO: More graceful handling of errors
+    for plug in PLUGINS:
+        th = threading.Thread(target=plug, args=[msg])
+        th.setDaemon(True)
+        th.start()
+
 def load(directory):
     """Load plugins from the given directory."""
     files = os.listdir(directory)
@@ -57,38 +92,3 @@ def load(directory):
             for keyword, function in  module.COMMANDS.iteritems():
                 logging.info("Loaded command %s", keyword)
                 COMMANDS[keyword] = function
-
-def do_command(msg):
-    """Check if we need to call a keyword-style command."""
-    # If this isn't a spoken chat message, ignore it
-    if msg.get("t") != "MESSAGE_CREATE":
-        return
-    
-    # If the message doesn't begin with our command char, ignore it
-    content = msg.get("d").get("content")
-    if not content.startswith(config.COMMAND_CHAR):
-        return
-    
-    # Remove the command prefix from the message
-    content = content[len(config.COMMAND_CHAR):]
-    
-    # Do we have args for this command?
-    if ' ' in content:
-        content = content.split(' ', 1)[0]
-    
-    # Normalise case
-    content = content.lower()
-    
-    # Is the command recognised? If so, call it
-    if content in COMMANDS:
-        COMMANDS[content](msg)
-# Add this to the plugins list
-PLUGINS.append(do_command)
-
-def handle(msg):
-    """Distribute a received message to all relevant plugins."""
-    # TODO: More graceful handling of errors
-    for plug in PLUGINS:
-        th = threading.Thread(target=plug, args=[msg])
-        th.setDaemon(True)
-        th.start()
