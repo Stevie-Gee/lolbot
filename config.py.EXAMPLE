@@ -8,6 +8,9 @@ BOT_TOKEN = ""
 # Timeout duration for initial websocket login
 WS_TIMEOUT = 3
 
+# What character prefix do you use for in-chat commands?
+COMMAND_CHAR = "!"
+
 # This will be populated with a custom requests.Session instance
 # which handles Discord's HTTP auth and URL prefix for you
 # Make requests to the root-relative API paths, e.g. "/channels/"

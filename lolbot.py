@@ -15,6 +15,7 @@ import time
 import requests
 import websocket
 
+import plugin_handler
 import config
 
 # Global variable for storing the current sequence number received from discord
@@ -56,12 +57,16 @@ def load_plugins(directory):
     Load all modules from the given directory, then return an array
     of all the modules with a `process_msg` function.
     """
-    plugins = []
+    # TODO: Merge this function with the 'plugin_handler' module
+    pluglist = []
+    commlist = {}
     files = os.listdir(directory)
     for fname in files:
         # Recursively load directories
         if os.path.isdir(os.path.join(directory, fname)):
-            plugins += load_plugins(os.path.join(directory, fname))
+            ptemp, ctemp = load_plugins(os.path.join(directory, fname))
+            pluglist += ptemp
+            commlist.update(ctemp)
             continue
         # Convert files to python module names
         elif fname.endswith('.py') and not fname.startswith('_'):
@@ -85,11 +90,17 @@ def load_plugins(directory):
             logging.warn("Failed to load module %s: %s %s", modulename, type(err), err)
             continue
         
-        # Stash ones we care about
+        # TODO: Handle errors gracefully
+        # Note which modules have generic message handling
         if getattr(module, "process_msg", None):
-            logging.debug("Loaded plugin %s", module)
-            plugins.append(module)
-    return plugins
+            logging.info("Loaded plugin %s", module)
+            pluglist.append(module)
+        # Note which modules provide commands
+        if getattr(module, "COMMANDS", None):
+            for keyword, function in  module.COMMANDS.iteritems():
+                logging.info("Storing command %s", keyword)
+                commlist[keyword] = function
+    return pluglist, commlist
 
 _SOCK_LOCK = threading.RLock()
 def socket_send(msg):
@@ -167,7 +178,8 @@ def main():
     config.HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
     
     # Initialise plugins from the "plugins" directory
-    plugins = load_plugins("plugins")
+    pluglist, plugin_handler.COMMANDS = load_plugins("plugins")
+    pluglist.append(plugin_handler)
     
     # Main read loop
     _WEBSOCKET.timeout = None
@@ -179,11 +191,12 @@ def main():
             msg = json.loads(incoming)
             
             # Update heartbeat number
+            # TODO: Get upset if we receive messages out of order
             if msg.get("s"):
                 SEQ_NO = int(msg.get("s"))
             
             # Pass to plugins
-            for plug in plugins:
+            for plug in pluglist:
                 th = threading.Thread(target=plug.process_msg, args=[msg])
                 th.setDaemon(True)
                 th.start()
