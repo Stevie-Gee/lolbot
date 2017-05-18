@@ -15,6 +15,8 @@ COMMANDS = {}
 # List of callables to handle every received websocket message
 PLUGINS = []
 
+# TODO: Implement a !help function
+
 def load(directory):
     """Load plugins from the given directory."""
     files = os.listdir(directory)
@@ -57,7 +59,7 @@ def load(directory):
                 COMMANDS[keyword] = function
 
 def do_command(msg):
-    """Possibly call a keyword-style command."""
+    """Check if we need to call a keyword-style command."""
     # If this isn't a spoken chat message, ignore it
     if msg.get("t") != "MESSAGE_CREATE":
         return

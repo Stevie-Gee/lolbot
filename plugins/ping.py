@@ -1,5 +1,6 @@
 """
-Basic ping/pong responder
+Example plugin, demonstrating how to implement a generic message handler
+and a keyword-response type command.
 """
 
 import logging
