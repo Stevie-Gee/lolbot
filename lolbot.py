@@ -4,6 +4,7 @@
 
 from __future__ import division, print_function
 
+import argparse
 import json
 import logging
 import logging.config
@@ -116,9 +117,6 @@ def main():
     """Main function - connect to server, start plugins."""
     global SEQ_NO
     
-    # Logging init
-    logging.config.dictConfig(config.LOGGING_CONFIG)
-    
     # Connect to server, login
     websocket_connect()
     
@@ -153,5 +151,18 @@ def main():
         # Explicitly disconnect when this process terminates
         _WEBSOCKET.close()
 
+def parse_args():
+    """Create and run argparse"""
+    parser = argparse.ArgumentParser(description="Discord bot")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    ARGS = parse_args()
+    
+    # Logging init
+    logging.config.dictConfig(config.LOGGING_CONFIG)
+    if ARGS.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
     main()
