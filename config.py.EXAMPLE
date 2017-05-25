@@ -11,6 +11,13 @@ WS_TIMEOUT = 3
 # What character prefix do you use for in-chat commands?
 COMMAND_CHAR = "!"
 
+# List of Discord user IDs you consider privileged/admin users
+# These are strings, not ints!
+ADMINS = []
+
+# The bot's own discord ID - no need to set this yourself
+SELF = ""
+
 # Logging config
 LOGGING_CONFIG = {
     'version': 1,

@@ -5,6 +5,7 @@
 from __future__ import division, print_function
 
 import argparse
+import base64
 import json
 import logging
 import logging.config
@@ -24,6 +25,9 @@ SEQ_NO = 0
 # Global variable for storing the websocket
 # Don't access this directly - use socket_send() instead
 _WEBSOCKET = None
+
+# Set the bot's own ID on import
+config.SELF = base64.b64decode(config.BOT_TOKEN.split('.')[0])
 
 class DiscordSession(requests.Session):
     """Custom Requests session that adds HTTP auth header, and adds the
