@@ -25,12 +25,7 @@ def call(msg):
     else:
         result = ("Today is %s, the %s%s day of %s in the YOLD %s" %
                   (WEEKDAYS[weekday], day, ordinalise(day), SEASONS[season], year))
-    
-    channel_id = msg.get("d").get("channel_id")
-    config.HTTP_SESSION.post(
-        "/channels/{0}/messages".format(channel_id),
-        json={"content": result},
-        )
+    config.reply_to(msg, result)
 
 def ddate():
     """Return today's discordian date as a tuple of

@@ -18,12 +18,7 @@ def handle(msg):
         else:
             return
         
-        channel_id = msg.get("d").get("channel_id")
-        logging.debug("Send %s", reply)
-        config.HTTP_SESSION.post(
-            "/channels/{0}/messages".format(channel_id),
-            json={"content": reply},
-            )
+        config.reply_to(msg, reply)
 
 # Commands as a dict
 def command(msg):
@@ -34,12 +29,7 @@ def command(msg):
     else:
         reply = "{0}pong".format(config.COMMAND_CHAR)
     
-    channel_id = msg.get("d").get("channel_id")
-    logging.debug("Send %s", reply)
-    config.HTTP_SESSION.post(
-        "/channels/{0}/messages".format(channel_id),
-        json={"content": reply},
-        )
+    config.reply_to(msg, reply)
 
 COMMANDS = {
     "ping": command,

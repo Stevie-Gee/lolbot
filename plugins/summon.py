@@ -360,11 +360,7 @@ def call(msg):
         random.choice(CLOTHES),
         random.choice(AFTERMATH),
         )
-    channel_id = msg.get("d").get("channel_id")
-    config.HTTP_SESSION.post(
-        "/channels/{0}/messages".format(channel_id),
-        json={"content": text},
-        )
+    config.reply_to(msg, text)
 
 HELP = """Summons a friend for you to play with."""
 
