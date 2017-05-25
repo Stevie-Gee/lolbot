@@ -6,66 +6,59 @@ forum usernames.
 import time
 import urllib
 import urllib2
-from bs4 import BeautifulSoup
 from plugins import Plugin, Command, UnlistedCommand
 
 alias_file = 'plugins/UserSearch/aliases.conf'
 
-class Alias():
+# Dictionary to map discord usernames to site usernames
+ALIASES = {}
+
+def getalias(nick):
     """
-    Singleton class handling the alias list. Note that aliases are NOT
-    case-sensitive!
+    If the given nick has an alias, returns the alias. Otherwise, returns
+    the original nick."""
+    if nick.lower() in ALIASES:
+        return ALIASES[nick.lower()]
+    else:
+        return nick
+
+def readaliases():
+    """Reads the aliases file into a python dict."""
+    # TODO: Use json instead
+    with open(alias_file) as f:
+        for line in f:
+            key, ALIASES[key] = line.strip().split(' ', 1)
+
+def writealiases():
+    """Writes the current contents of the alias dict to file."""
+    # TODO: Use with() syntax
+    try:
+        f = open(alias_file, 'w')
+        for key, value in ALIASES.iteritems():
+            f.write("%s %s\n" % (key, value))
+        f.close()
+    except Exception, e:
+        print str(e)
+
+def add(alias, nick):
     """
-    dic = {}
-    
-    @staticmethod
-    def getalias(nick):
-        """
-        If the given nick has an alias, returns the alias. Otherwise, returns
-        the original nick."""
-        if nick.lower() in Alias.dic:
-            return Alias.dic[nick.lower()]
-        else:
-            return nick
-    
-    @staticmethod
-    def readaliases():
-        """Reads the aliases file into a python dict."""
-        with open(alias_file) as f:
-            for line in f:
-                key, Alias.dic[key] = line.strip().split(' ', 1)
-    
-    @staticmethod
-    def writealiases():
-        """Writes the current contents of the alias dict to file."""
-        try:
-            f = open(alias_file, 'w')
-            for key, value in Alias.dic.iteritems():
-                f.write("%s %s\n" % (key, value))
-            f.close()
-        except Exception, e:
-            print str(e)
-    
-    @staticmethod
-    def add(alias, nick):
-        """
-        Adds a new alias to the dict, overwriting a previous alias if it existed.
-        """
-        Alias.dic[alias.lower()] = nick.lower()
-        Alias.writealiases()
-    
-    @staticmethod
-    def remove(alias):
-        """
-        Removes an existing alias. Returns True on success or False on failure.
-        """
-        if alias.lower() in Alias.dic:
-            del Alias.dic[alias.lower()]
-            Alias.writealiases()
-            return True
-        else:
-            return False
-Alias.readaliases()
+    Adds a new alias to the dict, overwriting a previous alias if it existed.
+    """
+    ALIASES[alias.lower()] = nick.lower()
+    writealiases()
+
+def remove(alias):
+    """
+    Removes an existing alias. Returns True on success or False on failure.
+    """
+    if alias.lower() in ALIASES:
+        del ALIASES[alias.lower()]
+        writealiases()
+        return True
+    else:
+        return False
+
+
 
 class UserSearch(Command):
     """Queries a database for the requested user (or the sender)."""
@@ -131,7 +124,7 @@ def search(nick):
     # Check for trailing underscore and remove
     if nick.endswith('_'):
         nick = nick[:-1]
-    nick = Alias.getalias(nick)
+    nick = getalias(nick)
     
     req = urllib2.Request(url)
     req.add_header('Content-type', 'application/x-www-form-urlencoded')
@@ -141,7 +134,7 @@ def search(nick):
     # Try replacing underscores with spaces
     if not result and '_' in nick:
         nick = nick.replace('_', ' ')
-        nick = Alias.getalias(nick)
+        nick = getalias(nick)
         postvars = urllib.urlencode({'password': password, 'user': nick})
         result = urllib2.urlopen(url, postvars, timeout).read()
     
@@ -176,7 +169,6 @@ def search(nick):
     timestring = timestring.strip()
     
     returnstring = "\x0307[\x0304User Search\x0307] \x0307%s \x0314[%s] \x0307[\x0304Posts \x0303%s \x0304Reputation \x0303%s\x0307] \x0307[\x0304Member for \x0303%s\x0307] \x0314https://www.lolicit.org/member.php?u=%s" % (uinfo['username'], uinfo['usertitle'], uinfo['posts'], uinfo['reputation'], timestring, uinfo['userid'])
-    returnstring = BeautifulSoup(returnstring)
     returnstring = unicode(returnstring).replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
     
     return (returnstring, uinfo)
@@ -194,7 +186,7 @@ class AddAlias(UnlistedCommand):
         
         if msg.commargs and ' ' in msg.commargs:
             alias, nick = msg.commargs.strip().split(' ', 1)
-            Alias.add(alias, nick)
+            add(alias, nick)
             server.replyto(msg, "%s is now %s" % (alias, nick))
         else:
             server.replyto(msg, "Not enough parameters.")
@@ -210,9 +202,13 @@ class DeAlias(UnlistedCommand):
             return
         
         if msg.commargs:
-            if Alias.remove(msg.commargs):
+            if remove(msg.commargs):
                 server.replyto(msg, "Alias deleted.")
             else:
                 server.replyto(msg, "'%s' never had an alias." % msg.commargs)
         else:
             server.replyto(msg, "Not enough parameters.")
+
+
+# On import, read aliases from config
+readaliases()
