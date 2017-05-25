@@ -14,8 +14,9 @@ import time
 import requests
 import websocket
 
-import plugin_handler
+import bot_utils
 import config
+import plugin_handler
 
 # Global variable for storing the current sequence number received from discord
 SEQ_NO = 0
@@ -121,7 +122,7 @@ def main():
     websocket_connect()
     
     # Create requests session
-    config.HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
+    bot_utils.HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
     
     # Initialise plugins from the "plugins" directory
     plugin_handler.load("plugins")

@@ -3,7 +3,7 @@ Print today's Discordian date.
 """
 
 import time
-import config
+import bot_utils
 
 WEEKDAYS = ['Sweetmorn',
             'Boomtime',
@@ -25,7 +25,7 @@ def call(msg):
     else:
         result = ("Today is %s, the %s%s day of %s in the YOLD %s" %
                   (WEEKDAYS[weekday], day, ordinalise(day), SEASONS[season], year))
-    config.reply_to(msg, result)
+    bot_utils.reply(msg, result)
 
 def ddate():
     """Return today's discordian date as a tuple of

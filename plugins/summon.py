@@ -1,7 +1,7 @@
 """Summons a random loli. Because my friends are perverts."""
 
 import random
-import config
+import bot_utils
 
 SUMMON = [
     'brings forth a',
@@ -360,7 +360,7 @@ def call(msg):
         random.choice(CLOTHES),
         random.choice(AFTERMATH),
         )
-    config.reply_to(msg, text)
+    bot_utils.reply(msg, text)
 
 HELP = """Summons a friend for you to play with."""
 

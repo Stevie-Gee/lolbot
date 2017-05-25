@@ -4,6 +4,7 @@ and a keyword-response type command.
 """
 
 import logging
+import bot_utils
 import config
 
 def handle(msg):
@@ -18,9 +19,8 @@ def handle(msg):
         else:
             return
         
-        config.reply_to(msg, reply)
+        bot_utils.reply(msg, reply)
 
-# Commands as a dict
 def command(msg):
     """Reply with !pong, and any args passed to the original !ping."""
     content = msg.get("d").get("content")
@@ -29,8 +29,9 @@ def command(msg):
     else:
         reply = "{0}pong".format(config.COMMAND_CHAR)
     
-    config.reply_to(msg, reply)
+    bot_utils.reply(msg, reply)
 
+# Commands as a dict
 COMMANDS = {
     "ping": command,
     "ping2": command,
