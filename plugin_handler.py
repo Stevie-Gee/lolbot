@@ -28,9 +28,8 @@ def do_command(msg):
     if not content.startswith(config.COMMAND_CHAR):
         return
     
-    # If the command came from a bot (e.g. us), do not respond
-    # TODO: Figure out how to identify messages from ourselves
-    if msg["d"]["author"].get("bot"):
+    # If the command came from a bot, do not respond
+    if msg["d"]["author"].get("bot") and not config.BOT_COMMANDS:
         return
     
     # Remove the command prefix from the message

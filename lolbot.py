@@ -146,7 +146,10 @@ def main():
                 SEQ_NO = int(msg.get("s"))
             
             # Pass to plugins
-            plugin_handler.handle(msg)
+            # Don't pass messages we've generated as this could lead to
+            # infinite looping
+            if msg["d"].get("author", {}).get("id") != config.SELF:
+                plugin_handler.handle(msg)
     
     except websocket.WebSocketException:
         logging.error("Websocket closed unexpectedly: %s %s", type(err), err)

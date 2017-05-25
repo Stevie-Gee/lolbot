@@ -18,6 +18,9 @@ ADMINS = []
 # The bot's own discord ID - no need to set this yourself
 SELF = ""
 
+# Set this True if you want to reply to !commands issued by other bots
+BOT_COMMANDS = False
+
 # Logging config
 LOGGING_CONFIG = {
     'version': 1,
