@@ -10,6 +10,7 @@ config.py directives:
 
 import re
 import requests
+import time
 
 import bot_utils
 import config
@@ -40,11 +41,37 @@ def command_search(msg):
     # Do search
     try:
         results = search_nick(nick)
-        bot_utils.reply(msg, str(results))
+        bot_utils.reply(msg, prettyprint(results))
     except ValueError:
         bot_utils.reply(msg, "Unknown username")
     except:
         bot_utils.reply(msg, "Error sending")
+
+def prettyprint(uinfo):
+    """Given a results dict from the site, return a nice string."""
+    # Please note this method does not take leap years into account
+    joindate = long(uinfo['joindate'])
+    timestring = ''
+    if time.time() > joindate:
+        joinlength = long(time.time()) - joindate
+    else:
+        joinlength = joindate - long(time.time())
+        timestring = '-'
+    if joinlength / 31536000 != 0:
+        timestring += str(joinlength / 31536000)+'y '
+    if (joinlength / 86400)%365 != 0:
+        timestring += str((joinlength / 86400)%365)+'d '
+    if (joinlength / 3600)%24 != 0:
+        timestring += str((joinlength / 3600)%24)+'h '
+    if (joinlength / 60)%60 != 0:
+        timestring += str((joinlength / 60)%60)+'m '
+    if joinlength%60 != 0:
+        timestring += str(joinlength%60)+'s '
+    uinfo["timestring"] = timestring.strip()
+    uinfo["url"] = config.USERSEARCH_PUBLIC_URL
+    
+    returnstring = "**{username}** - *{usertitle}* | **{posts}** posts | **{reputation}** rep | Member for **{timestring}** {url}{userid}"
+    return returnstring.format(**uinfo)
 
 def command_add(msg):
     """Add a new alias."""

@@ -24,6 +24,7 @@ BOT_COMMANDS = False
 
 # usersearch.py details
 USERSEARCH_URL = ""
+USERSEARCH_PUBLIC_URL = ""
 USERSEARCH_PW = ""
 USERSEARCH_ALIASES_FNAME = "plugins/usersearch_aliases.conf"
 #USERSEARCH_TIMEOUT = 3     # HTTP request timeout for usersearch
