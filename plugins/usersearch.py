@@ -75,6 +75,10 @@ def prettyprint(uinfo):
 
 def command_add(msg):
     """Add a new alias."""
+    if msg["d"].get("author", {}).get("id") not in config.ADMINS:
+        bot_utils.reply(msg, "Sorry, only authorised users can do this")
+        return
+    
     if msg["d"].get("content").count(" ") < 2:
         bot_utils.reply(msg, "Invalid format")
         return
@@ -91,6 +95,10 @@ def command_add(msg):
 
 def command_del(msg):
     """Remove an alias."""
+    if msg["d"].get("author", {}).get("id") not in config.ADMINS:
+        bot_utils.reply(msg, "Sorry, only authorised users can do this")
+        return
+    
     if msg["d"].get("content").count(" ") != 1:
         bot_utils.reply(msg, "Invalid format")
         return
