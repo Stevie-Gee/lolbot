@@ -2,3 +2,4 @@
 logs/
 
 config.py
+plugins/usersearch_aliases.conf

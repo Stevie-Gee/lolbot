@@ -22,6 +22,12 @@ SELF = b64decode(BOT_TOKEN.split('.')[0])
 # Set this True if you want to reply to !commands issued by other bots
 BOT_COMMANDS = False
 
+# usersearch.py details
+USERSEARCH_URL = ""
+USERSEARCH_PW = ""
+USERSEARCH_ALIASES_FNAME = "plugins/usersearch_aliases.conf"
+#USERSEARCH_TIMEOUT = 3     # HTTP request timeout for usersearch
+
 # Logging config
 LOGGING_CONFIG = {
     'version': 1,
