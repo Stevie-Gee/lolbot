@@ -148,10 +148,14 @@ def main():
             if (msg["d"] or {}).get("author", {}).get("id") != config.SELF:
                 plugin_handler.handle(msg)
     
+    except KeyboardInterrupt:
+        logging.info("Main loop stopped by SIGINT")
+        pass
     except websocket.WebSocketException:
         logging.error("Websocket closed unexpectedly: %s %s", type(err), err)
     except Exception as err:
         logging.error("Unexpected error: %s %s", type(err), err)
+        raise
     finally:
         # Explicitly disconnect when this process terminates
         _WEBSOCKET.close()
