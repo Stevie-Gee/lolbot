@@ -1,0 +1,20 @@
+[Unit]
+Description=Lolicit discord bot
+After=syslog.target network.target multi-user.target
+
+[Service]
+Type=simple
+
+# Because this is a fairly unrefined script...
+WorkingDirectory=/opt/lolbot
+
+ExecStart=/opt/lolbot/lolbot.py
+#ExecReload=/opt/lolbot/lolbot.py reload    # Not yet supported
+KillSignal=SIGINT
+
+# Probably not safe until we handle `kill` gracefully
+#Restart=on-failure
+
+# Don't run as root
+User=lolbot
+Group=lolbot
