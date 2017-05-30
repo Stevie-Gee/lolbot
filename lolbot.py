@@ -5,7 +5,6 @@
 from __future__ import division, print_function
 
 import argparse
-import base64
 import json
 import logging
 import logging.config
@@ -150,8 +149,7 @@ def main():
     
     except KeyboardInterrupt:
         logging.info("Main loop stopped by SIGINT")
-        pass
-    except websocket.WebSocketException:
+    except websocket.WebSocketException as err:
         logging.error("Websocket closed unexpectedly: %s %s", type(err), err)
     except Exception as err:
         logging.error("Unexpected error: %s %s", type(err), err)
