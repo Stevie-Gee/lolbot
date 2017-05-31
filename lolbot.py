@@ -88,6 +88,9 @@ def websocket_connect():
     logging.debug("websocket recv: %s", temp)
     hbi = int(json.loads(temp)["d"]["heartbeat_interval"]) // 1000  # Round to nearest second
     
+    # Set timeout so the websocket won't hang indefinitely
+    _WEBSOCKET.settimeout(2*hbi)
+    
     # Login
     if not config.BOT_TOKEN:
         logging.error("You haven't provided a valid Discord bot token, please edit config.py")
@@ -127,8 +130,6 @@ def main():
     # Initialise plugins from the "plugins" directory
     plugin_handler.load("plugins")
     
-    # Main read loop
-    _WEBSOCKET.timeout = None
     try:
         while True:
             # Wait for incoming message
