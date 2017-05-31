@@ -21,6 +21,9 @@ SESSION = requests.Session()
 # Dictionary to map discord IDs to site usernames
 ALIASES = {}
 
+# Extra kwargs to pass to the http handler
+HTTP_KWARGS = getattr(config, "USERSEARCH_HTTP_KWARGS", {})
+
 
 def command_search(msg):
     """Receive a discord message, process and reply."""
@@ -142,6 +145,7 @@ def search_nick(nick):
         config.USERSEARCH_URL,
         data={'password': config.USERSEARCH_PW, 'user': nick},
         timeout=getattr(config, "USERSEARCH_TIMEOUT", 3),
+        **HTTP_KWARGS
         )
     response.raise_for_status()
     
