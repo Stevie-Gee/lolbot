@@ -165,6 +165,7 @@ def search_nick(nick):
 COMMANDS = {
     "usersearch": command_search,
     "u": command_search,
+    "alias": command_add,
     "addalias": command_add,
     "dealias": command_del,
     "delalias": command_del,
