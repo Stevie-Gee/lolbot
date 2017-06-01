@@ -33,7 +33,12 @@ class DiscordSession(requests.Session):
 # A custom requests.Session instance
 # which handles Discord's HTTP auth and URL prefix for you
 # Make requests to the root-relative API paths, e.g. "/channels/"
-HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
+#
+#
+# DISABLED because Cloudflare apparently drops a session rather than
+# closing it gracefully, resulting in an exception the next time we
+# try to use it.
+# HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
 
 def reply(msg, reply):
     """Given a MESSAGE_CREATE event from discord, and a reply string,
@@ -41,7 +46,8 @@ def reply(msg, reply):
     came from.
     """
     channel_id = msg.get("d").get("channel_id")
-    HTTP_SESSION.post(
-        "/channels/{0}/messages".format(channel_id),
+    requests.post(
+        "{0}/channels/{1}/messages".format(config.BASE_URL, channel_id),
         json={"content": reply},
+        headers={"Authorization": "Bot " + config.BOT_TOKEN},
         )
