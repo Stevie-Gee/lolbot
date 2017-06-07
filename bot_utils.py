@@ -3,6 +3,10 @@ Functions that might be useful for plugins.
 """
 
 import requests
+try:
+    import urllib3
+except:
+    urllib3 = None
 
 import config
 
@@ -33,21 +37,28 @@ class DiscordSession(requests.Session):
 # A custom requests.Session instance
 # which handles Discord's HTTP auth and URL prefix for you
 # Make requests to the root-relative API paths, e.g. "/channels/"
-#
-#
-# DISABLED because Cloudflare apparently drops a session rather than
-# closing it gracefully, resulting in an exception the next time we
-# try to use it.
-# HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
+HTTP_SESSION = DiscordSession(config.BASE_URL, config.BOT_TOKEN)
 
-def reply(msg, reply):
-    """Given a MESSAGE_CREATE event from discord, and a reply string,
-    send the reply string to whichever channel/PM the original event
+def reply(msg, response):
+    """Given a MESSAGE_CREATE event from discord, and a response string,
+    send the response string to whichever channel/PM the original event
     came from.
     """
     channel_id = msg.get("d").get("channel_id")
-    requests.post(
-        "{0}/channels/{1}/messages".format(config.BASE_URL, channel_id),
-        json={"content": reply},
-        headers={"Authorization": "Bot " + config.BOT_TOKEN},
-        )
+    try:
+        HTTP_SESSION.post(
+            "/channels/{1}/messages".format(config.BASE_URL, channel_id),
+            json={"content": response},
+            )
+    except requests.ConnectionError as err:
+        # Cloudflare will silently drop our session, and older pythons
+        # don't gracefully retry this, so we'll do it ourselves
+        if (isinstance(err.message, urllib3.exceptions.ProtocolError)
+                and err.message.args
+                and err.message.args[0].lower().startswith("connection aborted")):
+            HTTP_SESSION.post(
+                "/channels/{1}/messages".format(config.BASE_URL, channel_id),
+                json={"content": response},
+                )
+        else:
+            raise
