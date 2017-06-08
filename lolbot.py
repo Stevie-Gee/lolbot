@@ -14,7 +14,6 @@ import time
 import requests
 import websocket
 
-import bot_utils
 import config
 import plugin_handler
 
@@ -24,6 +23,9 @@ SEQ_NO = 0
 # Global variable for storing the websocket
 # Don't access this directly - use socket_send() instead
 _WEBSOCKET = None
+
+# Need global access to this thread so we can kill it if necessary
+_HEARTBEATER = None
 
 
 def heartbeater(interval):
@@ -93,9 +95,10 @@ def websocket_connect():
         }})
     
     # Start heartbeater thread
-    th = threading.Thread(target=heartbeater, args=[hbi])
-    th.setDaemon(True)
-    th.start()
+    global _HEARTBEATER
+    _HEARTBEATER = threading.Thread(target=heartbeater, args=[hbi])
+    _HEARTBEATER.setDaemon(True)
+    _HEARTBEATER.start()
 
 def main():
     """Main function - connect to server, start plugins."""
