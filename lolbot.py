@@ -24,18 +24,47 @@ SEQ_NO = 0
 # Don't access this directly - use socket_send() instead
 _WEBSOCKET = None
 
-# Need global access to this thread so we can kill it if necessary
-_HEARTBEATER = None
+# Send and recv threads
+_RECV_THREAD = None
+_SEND_THREAD = None
 
 
-def heartbeater(interval):
+def heartbeater(sock, interval):
     """Loop forever, sending heartbeats. `interval` is in seconds."""
     while True:
         time.sleep(interval)
-        socket_send({"op": 1, "d": SEQ_NO})
+        socket_send(sock, {"op": 1, "d": SEQ_NO})
+
+def readloop(sock):
+    """Loop over the websocket, waiting for input."""
+    global SEQ_NO
+    
+    try:
+        while True:
+            # Wait for incoming message
+            incoming = sock.recv()
+            logging.debug("websocket recv: %s", incoming)
+            msg = json.loads(incoming)
+            
+            # Update heartbeat number
+            # TODO: Get upset if we receive messages out of order
+            if msg.get("s"):
+                SEQ_NO = int(msg.get("s"))
+            
+            # Pass to plugins
+            # Don't pass messages we've generated as this could lead to
+            # infinite looping
+            if (msg["d"] or {}).get("author", {}).get("id") != config.SELF:
+                plugin_handler.handle(msg)
+    
+    except websocket.WebSocketException as err:
+        logging.error("Websocket closed unexpectedly: %s %s", type(err), err)
+    finally:
+        # Explicitly disconnect when this process terminates
+        sock.close()
 
 _SOCK_LOCK = threading.RLock()
-def socket_send(msg):
+def socket_send(sock, msg):
     """Thread-safe handling of socket sends.
     
     `msg` can be a string or a dictionary, but must represent a
@@ -45,7 +74,7 @@ def socket_send(msg):
     if not isinstance(msg, basestring):
         msg = json.dumps(msg)
     with _SOCK_LOCK:
-        _WEBSOCKET.send(msg)
+        sock.send(msg)
 
 def websocket_connect():
     """Connect to the websocket, login."""
@@ -78,7 +107,7 @@ def websocket_connect():
         logging.error("You haven't provided a valid Discord bot token, please edit config.py")
         raise RuntimeError("You haven't provided a valid Discord bot token, please edit config.py")
     logging.info("Sending login...")
-    socket_send({
+    socket_send(_WEBSOCKET, {
         "op": 2,
         "d": {
             "token": config.BOT_TOKEN,
@@ -95,49 +124,41 @@ def websocket_connect():
         }})
     
     # Start heartbeater thread
-    global _HEARTBEATER
-    _HEARTBEATER = threading.Thread(target=heartbeater, args=[hbi])
-    _HEARTBEATER.setDaemon(True)
-    _HEARTBEATER.start()
+    global _RECV_THREAD, _SEND_THREAD
+    _SEND_THREAD = threading.Thread(target=heartbeater, args=[_WEBSOCKET, hbi])
+    _SEND_THREAD.setDaemon(True)
+    _SEND_THREAD.start()
+    
+    # Start input thread
+    _RECV_THREAD = threading.Thread(target=readloop, args=[_WEBSOCKET])
+    _RECV_THREAD.setDaemon(True)
+    _RECV_THREAD.start()
 
 def main():
     """Main function - connect to server, start plugins."""
-    global SEQ_NO
-    
     # Connect to server, login
     websocket_connect()
     
     # Initialise plugins from the "plugins" directory
     plugin_handler.load("plugins")
     
-    try:
-        while True:
-            # Wait for incoming message
-            incoming = _WEBSOCKET.recv()
-            logging.debug("websocket recv: %s", incoming)
-            msg = json.loads(incoming)
-            
-            # Update heartbeat number
-            # TODO: Get upset if we receive messages out of order
-            if msg.get("s"):
-                SEQ_NO = int(msg.get("s"))
-            
-            # Pass to plugins
-            # Don't pass messages we've generated as this could lead to
-            # infinite looping
-            if (msg["d"] or {}).get("author", {}).get("id") != config.SELF:
-                plugin_handler.handle(msg)
-    
-    except KeyboardInterrupt:
-        logging.info("Main loop stopped by SIGINT")
-    except websocket.WebSocketException as err:
-        logging.error("Websocket closed unexpectedly: %s %s", type(err), err)
-    except Exception as err:
-        logging.error("Unexpected error: %s %s", type(err), err)
-        raise
-    finally:
-        # Explicitly disconnect when this process terminates
-        _WEBSOCKET.close()
+    while True:
+        if not _RECV_THREAD.is_alive() or not _SEND_THREAD.is_alive():
+            # Threads have died, assume our websocket has died and restart it
+            # The old threads were tied to the old socket so will time themselves out
+            try:
+                _WEBSOCKET.close()
+            except:
+                pass
+            logging.info("Websocket appears to have died, restarting...")
+            websocket_connect()
+        # Wait a while, since I don't have an input queue yet
+        try:
+            time.sleep(10)
+        except KeyboardInterrupt:
+            logging.info("Main loop stopped by SIGINT")
+            _WEBSOCKET.close()
+            break
 
 def parse_args():
     """Create and run argparse"""
