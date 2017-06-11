@@ -132,7 +132,7 @@ def main():
     
     # Initialise sequence number to zero.
     # Initialise websocket and heartbeat intervals
-    hb_int = 42.0
+    hb_int = 41.25
     seq_no = 0
     wsock = None
     
