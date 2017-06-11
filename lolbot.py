@@ -36,20 +36,26 @@ def clean_queue(msgqueue):
         if msg not in badtypes:
             msgqueue.put(msg)
 
-def heartbeater(interval, msgqueue, myqueue):
+def heartbeater(msgqueue, myqueue):
     """Loop forever, sending heartbeats. `interval` is in seconds.
     
     If the heartbeat interval needs to be updated (i.e. for a websocket
     reconnect), a message will be pushed to myqueue.
     """
+    # Initially, we need to block until someone sends us a heartbeat interval
+    # Once we have a heartbeat interval, we don't block on `myqueue` anymore
+    startup = True
+    
+    # Now we can start the main loop
     while True:
-        time.sleep(interval)
-        msgqueue.put("HEARTBEAT")
         try:
-            interval = myqueue.get(False)
+            interval = myqueue.get(startup)
             logging.debug("Updating heartbeat interval to %ss", interval)
+            startup = False
         except Queue.Empty:
             pass
+        time.sleep(interval)
+        msgqueue.put("HEARTBEAT")
 
 def readloop(sock, msgqueue):
     """Loop over the websocket, waiting for input."""
@@ -132,13 +138,12 @@ def main():
     
     # Initialise sequence number to zero.
     # Initialise websocket and heartbeat intervals
-    hb_int = 41.25
     seq_no = 0
     wsock = None
     
     # Start heartbeat loop
     hb_queue = Queue.Queue()
-    hb_thread = threading.Thread(target=heartbeater, args=[hb_int, msgqueue, hb_queue])
+    hb_thread = threading.Thread(target=heartbeater, args=[msgqueue, hb_queue])
     hb_thread.setDaemon(True)
     hb_thread.start()
     
