@@ -10,6 +10,7 @@ import json
 import logging
 import logging.config
 import Queue
+import signal
 import threading
 import time
 
@@ -18,6 +19,14 @@ import websocket
 
 import config
 import plugin_handler
+
+# Global event queue, handled by main() loop
+MSGQUEUE = Queue.Queue()
+
+# Handle signals gracefully
+def sig_handler(signum, frame):
+    MSGQUEUE.put("QUIT")
+signal.signal(signal.SIGINT, sig_handler)
 
 def clean_queue(msgqueue):
     """Perform an in-place modification of the given queue, removing
@@ -37,7 +46,7 @@ def clean_queue(msgqueue):
         if msg not in badtypes:
             msgqueue.put(msg)
 
-def heartbeater(msgqueue, myqueue):
+def heartbeater(myqueue):
     """Loop forever, sending heartbeats. `interval` is in seconds.
     
     If the heartbeat interval needs to be updated (i.e. for a websocket
@@ -56,9 +65,9 @@ def heartbeater(msgqueue, myqueue):
         except Queue.Empty:
             pass
         time.sleep(interval)
-        msgqueue.put("HEARTBEAT")
+        MSGQUEUE.put("HEARTBEAT")
 
-def readloop(sock, msgqueue):
+def readloop(sock):
     """Loop over the websocket, waiting for input."""
     try:
         while True:
@@ -66,10 +75,10 @@ def readloop(sock, msgqueue):
             incoming = sock.recv()
             logging.debug("websocket recv: %s", incoming)
             msg = json.loads(incoming)
-            msgqueue.put(("MSG", msg))
+            MSGQUEUE.put(("MSG", msg))
     except Exception as err:
         logging.error("readloop died: %s %s", type(err), err)
-        msgqueue.put("WEBSOCKET_ERROR")
+        MSGQUEUE.put("WEBSOCKET_ERROR")
 
 _SOCK_LOCK = threading.RLock()
 def socket_send(sock, msg):
@@ -141,8 +150,7 @@ def websocket_connect(session):
 def main():
     """Replacement for main() """
     # Create queue and prepare to connect
-    msgqueue = Queue.Queue()
-    msgqueue.put("WEBSOCKET_CONNECT")
+    MSGQUEUE.put("WEBSOCKET_CONNECT")
     
     # Initialise plugins from the "plugins" directory
     plugin_handler.load("plugins")
@@ -156,7 +164,7 @@ def main():
     
     # Start heartbeat loop
     hb_queue = Queue.Queue()
-    hb_thread = threading.Thread(target=heartbeater, args=[msgqueue, hb_queue])
+    hb_thread = threading.Thread(target=heartbeater, args=[hb_queue])
     hb_thread.setDaemon(True)
     hb_thread.start()
     
@@ -167,12 +175,10 @@ def main():
             # interrupt the get() call. The read thread will timeout
             # after 2*hb_int of inactivity, so we don't expect to
             # reach this
-            msg = msgqueue.get(True, 9999)
+            msg = MSGQUEUE.get(True, 9999)
         except Queue.Empty:
             # Expect to never reach here
             msg = "QUEUE_EMPTY"
-        except KeyboardInterrupt:
-            msg = "QUIT"
         
         if msg[0] == "MSG":
             content = msg[1]
@@ -189,7 +195,7 @@ def main():
             if content["op"] == 9:
                 # Session resumption failed
                 session = {"seq": 0, "session_id": ""}
-                msgqueue.put("WEBSOCKET_ERROR")
+                MSGQUEUE.put("WEBSOCKET_ERROR")
             
             # Pass to plugins
             # Don't pass messages we've generated as this could lead to
@@ -204,7 +210,7 @@ def main():
                 socket_send(wsock, {"op": 1, "d": session["seq"]})
             except Exception as err:
                 logging.info("Failed to send heartbeat: %s %s", type(err), err)
-                msgqueue.put("WEBSOCKET_ERROR")
+                MSGQUEUE.put("WEBSOCKET_ERROR")
         
         elif msg == "QUIT":
             # Shutdown
@@ -219,26 +225,26 @@ def main():
             wsock.close()
             # Wait a little, then reconnect
             time.sleep(delay)
-            clean_queue(msgqueue)
-            msgqueue.put("WEBSOCKET_CONNECT")
+            clean_queue(MSGQUEUE)
+            MSGQUEUE.put("WEBSOCKET_CONNECT")
         
         elif msg == "WEBSOCKET_CONNECT":
             # Purge any heartbeats, connects, or error messages from the
             # queue so we don't double-process
-            clean_queue(msgqueue)
+            clean_queue(MSGQUEUE)
             
             # Reconnect to websocket
             try:
                 wsock, hb_int = websocket_connect(session)
             except:
                 # Failure!
-                msgqueue.put("WEBSOCKET_ERROR")
+                MSGQUEUE.put("WEBSOCKET_ERROR")
                 logging.warn("Reconnection failed!")
                 continue
             # Update heartbeat interval
             hb_queue.put(hb_int)
             # Start new thread for receiving from socket
-            recv_thread = threading.Thread(target=readloop, args=[wsock, msgqueue])
+            recv_thread = threading.Thread(target=readloop, args=[wsock])
             recv_thread.setDaemon(True)
             recv_thread.start()
         else:
