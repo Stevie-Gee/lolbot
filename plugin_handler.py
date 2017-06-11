@@ -1,5 +1,14 @@
 """
-Handle simple !command style plugins.
+Check all modules in the plugins/ directory. Any modules may present:
+A callable named `handle`,
+AND/OR
+A `COMMANDS` dictionary, mapping command keywords to callables.
+
+All of these callables must take a single positional argument - a dict
+representing a JSON message received from the Discord websocket API.
+
+The COMMANDS dictionary will create simple !command-style handlers.
+The handle() function will be called for every event received from Discord.
 """
 
 import logging
