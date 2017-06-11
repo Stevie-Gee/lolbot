@@ -2,8 +2,6 @@
 
 """Discord bot"""
 
-# TODO: Signal handling
-
 from __future__ import division, print_function
 
 import argparse
@@ -124,7 +122,17 @@ def main():
     
     # Wait for messages in queue
     while True:
-        msg = msgqueue.get(True)
+        try:
+            # We need a timeout on this queue so that:
+            # a) Signals can interrupt the get() call
+            # b) We'll time ourselves out if the socket goes silent
+            msg = msgqueue.get(True, hb_int*2)
+        except Queue.Empty:
+            # Websocket has been quiet for too long, assume it's disconnected
+            msg = "WEBSOCKET_ERROR"
+        except KeyboardInterrupt:
+            msg = "QUIT"
+        
         if msg[0] == "MSG":
             content = msg[1]
             # Fork off to process
@@ -150,10 +158,7 @@ def main():
         elif msg == "QUIT":
             # Shutdown
             logging.info("Main loop stopping...")
-            try:
-                wsock.close()
-            except:
-                pass
+            break
         
         elif msg == "WEBSOCKET_ERROR":
             # Try to spawn new websocket
@@ -161,6 +166,13 @@ def main():
             # An exponentially-growing sleep would delay our response to e.g. signals
             # TODO: This
             pass
+        
+        else:
+            logging.error("Unknown message type: %s", msg)
+            break
+    
+    # Explicitly close socket when this function stops
+    wsock.close()
 
 def parse_args():
     """Create and run argparse"""
