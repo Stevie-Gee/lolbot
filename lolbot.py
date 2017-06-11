@@ -5,6 +5,7 @@
 from __future__ import division, print_function
 
 import argparse
+from collections import namedtuple
 import json
 import logging
 import logging.config
@@ -137,9 +138,11 @@ def main():
     plugin_handler.load("plugins")
     
     # Initialise sequence number to zero.
-    # Initialise websocket and heartbeat intervals
     seq_no = 0
-    wsock = None
+    
+    # Add a placeholder websocket object with a close() method, so
+    # WEBSOCKET_ERROR doesn't crash if our first connection fails
+    wsock = namedtuple("WebSocket", "close")(close=lambda: None)
     
     # Start heartbeat loop
     hb_queue = Queue.Queue()
@@ -208,17 +211,17 @@ def main():
             # Reconnect to websocket
             try:
                 wsock, hb_int = websocket_connect()
-                hb_queue.put(hb_int)
             except:
                 # Failure!
                 msgqueue.put("WEBSOCKET_ERROR")
                 logging.warn("Reconnection failed!")
                 continue
+            # Update heartbeat interval
+            hb_queue.put(hb_int)
             # Start new thread for receiving from socket
             recv_thread = threading.Thread(target=readloop, args=[wsock, msgqueue])
             recv_thread.setDaemon(True)
             recv_thread.start()
-        
         else:
             logging.error("Unknown message type: %s", msg)
             break
