@@ -18,12 +18,38 @@ import websocket
 import config
 import plugin_handler
 
+def clean_queue(msgqueue):
+    """Perform an in-place modification of the given queue, removing
+    any message types we don't want in there.
+    
+    Used to remove heartbeat and reconnection requests if we're already
+    in a failure mode.
+    """
+    badtypes = ("WEBSOCKET_ERROR", "WEBSOCKET_CONNECT", "HEARTBEAT")
+    msgs = []
+    while True:
+        try:
+            msgs.append(msgqueue.get(False))
+        except Queue.Empty:
+            break
+    for msg in msgs:
+        if msg not in badtypes:
+            msgqueue.put(msg)
 
-def heartbeater(interval, msgqueue):
-    """Loop forever, sending heartbeats. `interval` is in seconds."""
+def heartbeater(interval, msgqueue, myqueue):
+    """Loop forever, sending heartbeats. `interval` is in seconds.
+    
+    If the heartbeat interval needs to be updated (i.e. for a websocket
+    reconnect), a message will be pushed to myqueue.
+    """
     while True:
         time.sleep(interval)
         msgqueue.put("HEARTBEAT")
+        try:
+            interval = myqueue.get(False)
+            logging.debug("Updating heartbeat interval to %ss", interval)
+        except Queue.Empty:
+            pass
 
 def readloop(sock, msgqueue):
     """Loop over the websocket, waiting for input."""
@@ -77,9 +103,6 @@ def websocket_connect():
     wsock.settimeout(2*hbi)
     
     # Login
-    if not config.BOT_TOKEN:
-        logging.error("You haven't provided a valid Discord bot token, please edit config.py")
-        raise RuntimeError("You haven't provided a valid Discord bot token, please edit config.py")
     logging.info("Sending login...")
     socket_send(wsock, {
         "op": 2,
@@ -100,36 +123,36 @@ def websocket_connect():
 
 def main():
     """Replacement for main() """
-    # Create queue
+    # Create queue and prepare to connect
     msgqueue = Queue.Queue()
+    msgqueue.put("WEBSOCKET_CONNECT")
     
     # Initialise plugins from the "plugins" directory
     plugin_handler.load("plugins")
     
-    # Connect to websocket. If this fails, give up.
-    wsock, hb_int = websocket_connect()
+    # Initialise sequence number to zero.
+    # Initialise websocket and heartbeat intervals
+    hb_int = 42.0
     seq_no = 0
+    wsock = None
     
     # Start heartbeat loop
-    hb_thread = threading.Thread(target=heartbeater, args=[hb_int, msgqueue])
+    hb_queue = Queue.Queue()
+    hb_thread = threading.Thread(target=heartbeater, args=[hb_int, msgqueue, hb_queue])
     hb_thread.setDaemon(True)
     hb_thread.start()
-    
-    # Start thread for receiving from socket
-    recv_thread = threading.Thread(target=readloop, args=[wsock, msgqueue])
-    recv_thread.setDaemon(True)
-    recv_thread.start()
     
     # Wait for messages in queue
     while True:
         try:
-            # We need a timeout on this queue so that:
-            # a) Signals can interrupt the get() call
-            # b) We'll time ourselves out if the socket goes silent
-            msg = msgqueue.get(True, hb_int*2)
+            # We need a timeout on this queue so that signals can
+            # interrupt the get() call. The read thread will timeout
+            # after 2*hb_int of inactivity, so we don't expect to
+            # reach this
+            msg = msgqueue.get(True, 9999)
         except Queue.Empty:
-            # Websocket has been quiet for too long, assume it's disconnected
-            msg = "WEBSOCKET_ERROR"
+            # Expect to never reach here
+            msg = "QUEUE_EMPTY"
         except KeyboardInterrupt:
             msg = "QUIT"
         
@@ -154,6 +177,7 @@ def main():
                 socket_send(wsock, {"op": 1, "d": seq_no})
             except Exception as err:
                 logging.info("Failed to send heartbeat: %s %s", type(err), err)
+                msgqueue.put("WEBSOCKET_ERROR")
         
         elif msg == "QUIT":
             # Shutdown
@@ -161,11 +185,34 @@ def main():
             break
         
         elif msg == "WEBSOCKET_ERROR":
-            # Try to spawn new websocket
-            # Except: put ERROR back to tail of queue, sleep a bit (linear sleep?)
-            # An exponentially-growing sleep would delay our response to e.g. signals
-            # TODO: This
-            pass
+            # Kill the existing websocket
+            delay = 10
+            logging.warn("Websocket appears to have died. Reconnecting in %ss...", delay)
+            # Make sure the old socket is closed first
+            wsock.close()
+            # Wait a little, then reconnect
+            time.sleep(delay)
+            clean_queue(msgqueue)
+            msgqueue.put("WEBSOCKET_CONNECT")
+        
+        elif msg == "WEBSOCKET_CONNECT":
+            # Purge any heartbeats, connects, or error messages from the
+            # queue so we don't double-process
+            clean_queue(msgqueue)
+            
+            # Reconnect to websocket
+            try:
+                wsock, hb_int = websocket_connect()
+                hb_queue.put(hb_int)
+            except:
+                # Failure!
+                msgqueue.put("WEBSOCKET_ERROR")
+                logging.warn("Reconnection failed!")
+                continue
+            # Start new thread for receiving from socket
+            recv_thread = threading.Thread(target=readloop, args=[wsock, msgqueue])
+            recv_thread.setDaemon(True)
+            recv_thread.start()
         
         else:
             logging.error("Unknown message type: %s", msg)
@@ -187,5 +234,10 @@ if __name__ == '__main__':
     logging.config.dictConfig(config.LOGGING_CONFIG)
     if ARGS.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
+    
+    # Validate config
+    if not config.BOT_TOKEN:
+        logging.error("You haven't provided a valid Discord bot token, please edit config.py")
+        raise RuntimeError("You haven't provided a valid Discord bot token, please edit config.py")
     
     main()
