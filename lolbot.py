@@ -84,7 +84,7 @@ def socket_send(sock, msg):
     with _SOCK_LOCK:
         sock.send(msg)
 
-def websocket_connect():
+def websocket_connect(session_id, seq_no):
     """Connect to the websocket, login."""
     # Get the websocket URL from discord
     ws_url = requests.get(config.BASE_URL + "/gateway").json()['url']
@@ -110,22 +110,32 @@ def websocket_connect():
     wsock.settimeout(2*hbi)
     
     # Login
-    logging.info("Sending login...")
-    socket_send(wsock, {
-        "op": 2,
-        "d": {
-            "token": config.BOT_TOKEN,
-            "properties": {
-                "$os": "linux",
-                "$browser": "Disgordian",
-                "$device": "Disgordian",
-                "$referrer": "",
-                "$referring_domain": ""
-            },
-            "compress": False,
-            "large_threshold": 250,
-            "shard": [0, 1]
-        }})
+    if session_id and seq_no:
+        logging.info("Resuming session...")
+        socket_send(wsock, {
+            "op": 6,
+            "d": {
+                "token": config.BOT_TOKEN,
+                "session_id": session_id,
+                "seq": seq_no,
+            }})
+    else:
+        logging.info("Sending login...")
+        socket_send(wsock, {
+            "op": 2,
+            "d": {
+                "token": config.BOT_TOKEN,
+                "properties": {
+                    "$os": "linux",
+                    "$browser": "Disgordian",
+                    "$device": "Disgordian",
+                    "$referrer": "",
+                    "$referring_domain": ""
+                },
+                "compress": False,
+                "large_threshold": 250,
+                "shard": [0, 1]
+            }})
     return wsock, hbi
 
 def main():
@@ -139,6 +149,7 @@ def main():
     
     # Initialise sequence number to zero.
     seq_no = 0
+    session_id = ''
     
     # Add a placeholder websocket object with a close() method, so
     # WEBSOCKET_ERROR doesn't crash if our first connection fails
@@ -167,10 +178,20 @@ def main():
         if msg[0] == "MSG":
             content = msg[1]
             # Fork off to process
+            # If this is first message, set session_id
+            if content.get("t") == "READY":
+                session_id = content["d"].get("session_id")
             # Update heartbeat number
             # TODO: Get upset if we receive messages out of order
             if content.get("s"):
                 seq_no = int(content.get("s"))
+            
+            # Rejected login or rejected heartbeat - disconnect and try again
+            if content["op"] == 9:
+                # Session resumption failed
+                seq_no = 0
+                session_id = ''
+                msgqueue.put("WEBSOCKET_ERROR")
             
             # Pass to plugins
             # Don't pass messages we've generated as this could lead to
@@ -194,7 +215,7 @@ def main():
         
         elif msg == "WEBSOCKET_ERROR":
             # Kill the existing websocket
-            delay = 10
+            delay = 6
             logging.warn("Websocket appears to have died. Reconnecting in %ss...", delay)
             # Make sure the old socket is closed first
             wsock.close()
@@ -210,7 +231,7 @@ def main():
             
             # Reconnect to websocket
             try:
-                wsock, hb_int = websocket_connect()
+                wsock, hb_int = websocket_connect(session_id, seq_no)
             except:
                 # Failure!
                 msgqueue.put("WEBSOCKET_ERROR")
