@@ -84,7 +84,7 @@ def socket_send(sock, msg):
     with _SOCK_LOCK:
         sock.send(msg)
 
-def websocket_connect(session_id, seq_no):
+def websocket_connect(session):
     """Connect to the websocket, login."""
     # Get the websocket URL from discord
     ws_url = requests.get(config.BASE_URL + "/gateway").json()['url']
@@ -110,14 +110,14 @@ def websocket_connect(session_id, seq_no):
     wsock.settimeout(2*hbi)
     
     # Login
-    if session_id and seq_no:
+    if session.get("session_id"):
         logging.info("Resuming session...")
         socket_send(wsock, {
             "op": 6,
             "d": {
                 "token": config.BOT_TOKEN,
-                "session_id": session_id,
-                "seq": seq_no,
+                "session_id": session["session_id"],
+                "seq": session["seq"],
             }})
     else:
         logging.info("Sending login...")
@@ -148,8 +148,7 @@ def main():
     plugin_handler.load("plugins")
     
     # Initialise sequence number to zero.
-    seq_no = 0
-    session_id = ''
+    session = {"seq": 0, "session_id": ""}
     
     # Add a placeholder websocket object with a close() method, so
     # WEBSOCKET_ERROR doesn't crash if our first connection fails
@@ -180,17 +179,16 @@ def main():
             # Fork off to process
             # If this is first message, set session_id
             if content.get("t") == "READY":
-                session_id = content["d"].get("session_id")
+                session["session_id"] = content["d"].get("session_id")
             # Update heartbeat number
             # TODO: Get upset if we receive messages out of order
             if content.get("s"):
-                seq_no = int(content.get("s"))
+                session["seq"] = int(content.get("s"))
             
             # Rejected login or rejected heartbeat - disconnect and try again
             if content["op"] == 9:
                 # Session resumption failed
-                seq_no = 0
-                session_id = ''
+                session = {"seq": 0, "session_id": ""}
                 msgqueue.put("WEBSOCKET_ERROR")
             
             # Pass to plugins
@@ -203,7 +201,7 @@ def main():
             # Send heartbeat
             # We don't care about dropping heartbeats if the socket is down
             try:
-                socket_send(wsock, {"op": 1, "d": seq_no})
+                socket_send(wsock, {"op": 1, "d": session["seq"]})
             except Exception as err:
                 logging.info("Failed to send heartbeat: %s %s", type(err), err)
                 msgqueue.put("WEBSOCKET_ERROR")
@@ -231,7 +229,7 @@ def main():
             
             # Reconnect to websocket
             try:
-                wsock, hb_int = websocket_connect(session_id, seq_no)
+                wsock, hb_int = websocket_connect(session)
             except:
                 # Failure!
                 msgqueue.put("WEBSOCKET_ERROR")
