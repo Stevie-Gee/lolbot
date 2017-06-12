@@ -1,4 +1,7 @@
-"""Provides usage help for the other !commands. Help is the docstring for any function."""
+"""Provides usage help for the other !commands. Help is the docstring for any function.
+
+If you put {cc} in your docstring, it will be replaced by the command character.
+"""
 
 import bot_utils
 import config
@@ -16,6 +19,7 @@ def init(commdict):
         HELPS[key.lower()] = func.__doc__
 
 def call(msg):
+    """For help with a particular command, type _{cc}help command_."""
     content = msg.get("d").get("content")
     if ' ' in content:
         command = content.split(None)[1].lower()
@@ -24,13 +28,14 @@ def call(msg):
         else:
             reply = "Unknown command"
     else:
-        reply = "Available commands: !{0}. For help with a particular command, type {1}help command"
-        reply = reply.format(', !'.join(HELPS), config.COMMAND_CHAR)
+        reply = "Available commands: {cc}%s. For help with a particular command, type {cc}help command"
+        reply %= ', {cc}'.join(HELPS)
+    
     if not reply.endswith('.'):
         reply += '.'
+    if '{cc}' in reply:
+        reply = reply.format(cc=config.COMMAND_CHAR)
     bot_utils.reply(msg, reply)
-
-call.__doc__ = """Provides help for a given command. For help with a particular command, type _{0}help command_.""".format(config.COMMAND_CHAR)
 
 COMMANDS = {
     "help": call,
