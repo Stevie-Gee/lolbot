@@ -17,6 +17,7 @@ import sys
 import threading
 
 import config
+from plugins import help_plugin
 
 # Dict mapping keyword-style chat commands to their callables
 COMMANDS = {}
@@ -105,3 +106,6 @@ def load(directory):
             for keyword, function in  module.COMMANDS.iteritems():
                 logging.info("Loaded command %s", keyword)
                 COMMANDS[keyword] = function
+    
+    # Special handling for !help
+    help_plugin.init(COMMANDS)
