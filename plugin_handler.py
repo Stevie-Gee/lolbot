@@ -16,6 +16,7 @@ import os
 import sys
 import threading
 
+import bot_utils
 import config
 from plugins import help_plugin
 
@@ -55,6 +56,9 @@ def do_command(msg):
     # Is the command recognised? If so, call it
     if content in COMMANDS:
         COMMANDS[content](msg)
+    else:
+        bot_utils.reply(msg, "Unknown command: _{0}{1}_.".format(config.COMMAND_CHAR, content))
+
 # Add this to the plugins list
 PLUGINS.append(do_command)
 
