@@ -22,5 +22,4 @@ def command(msg):
 
 COMMANDS = {
     "uid": command,
-    "userid": command,
 }
