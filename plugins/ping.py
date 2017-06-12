@@ -34,4 +34,6 @@ def command(msg):
 # Commands as a dict
 COMMANDS = {
     "ping": command,
+    # Add this so that !foo isn't an 'unrecognised command'
+    "foo": lambda msg: None,
 }
