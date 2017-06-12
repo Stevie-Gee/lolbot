@@ -28,7 +28,7 @@ def call(msg):
         else:
             reply = "Unknown command"
     else:
-        reply = "Available commands: {cc}%s. For help with a particular command, type {cc}help command"
+        reply = "Available commands: {cc}%s.\nFor help with a particular command, type _{cc}help command_"
         reply %= ', {cc}'.join(HELPS)
     
     if not reply.endswith('.'):
