@@ -342,6 +342,7 @@ AFTERMATH = [
     ]
 
 def call(msg):
+    """Summon a random loli for you."""
     content = msg.get("d").get("content")
     if ' ' in content:
         thing = content.split(None, 1)[1]

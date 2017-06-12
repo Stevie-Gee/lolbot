@@ -22,7 +22,7 @@ def call(msg):
     """For help with a particular command, type _{cc}help command_."""
     content = msg.get("d").get("content")
     if ' ' in content:
-        command = content.split(None)[1].lower()
+        command = content.split(None)[1].lower().strip(config.COMMAND_CHAR)
         if command in HELPS:
             reply = HELPS[command] or "No help available"
         else:

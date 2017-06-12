@@ -231,6 +231,7 @@ THOUGHTS = [
     ]
 
 def call(msg):
+    """Thought for the day."""
     bot_utils.reply(msg, "Thought for the day: %s" % random.choice(THOUGHTS))
 
 HELP = """Thought for the day"""

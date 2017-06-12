@@ -18,7 +18,7 @@ SEASONS = ['Chaos',
            'Aftermath']
 
 def call(msg):
-    """When this command is called, respond with today's Discordian date."""
+    """Discordianism is cool."""
     day, weekday, season, year, istib = ddate()
     if istib:
         result = "Today is St. Tib's day in the YOLD %s" % year

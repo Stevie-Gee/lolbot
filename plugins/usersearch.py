@@ -26,7 +26,7 @@ HTTP_KWARGS = getattr(config, "USERSEARCH_HTTP_KWARGS", {})
 
 
 def command_search(msg):
-    """Receive a discord message, process and reply."""
+    """Return the lolicit profile for the given user."""
     # Get either the first argument after the command, or the userID
     # of the sender if no args provided
     if ' ' in msg["d"].get("content"):

@@ -6,9 +6,7 @@ import re
 import bot_utils
 
 def command(msg):
-    """If the command is !uid <@mention>, return ID of the mentioned user.
-    Otherwise, return the uid of the user who sent the message.
-    """
+    """Return the Discord ID of the mentioned user, or the ID of the user who sent the message."""
     content = msg.get("d").get("content")
     if ' ' in content:
         arg = content.split()[1]

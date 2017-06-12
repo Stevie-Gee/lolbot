@@ -22,7 +22,7 @@ def handle(msg):
         bot_utils.reply(msg, reply)
 
 def command(msg):
-    """Reply with !pong, and any args passed to the original !ping."""
+    """Reply with {cc}pong, and any args passed to the original {cc}ping."""
     content = msg.get("d").get("content")
     if ' ' in content:
         reply = "{0}pong {1}".format(config.COMMAND_CHAR, content.split(' ', 1)[1])
@@ -34,13 +34,4 @@ def command(msg):
 # Commands as a dict
 COMMANDS = {
     "ping": command,
-    "ping2": command,
-}
-# Help is a separate dictionary
-HELPS = {
-    "ping": "Replies with a pong",
-}
-# Or maybe the keys could be tuples instead, so we have a primary and aliases?
-HELPS = {
-    ("ping", "ping2"): "replies with a pong",
 }
