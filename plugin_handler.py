@@ -11,9 +11,9 @@ The COMMANDS dictionary will create simple !command-style handlers.
 The handle() function will be called for every event received from Discord.
 """
 
+import imp
 import logging
 import os
-import sys
 import threading
 
 import bot_utils
@@ -25,8 +25,6 @@ COMMANDS = {}
 
 # List of callables to handle every received websocket message
 PLUGINS = []
-
-# TODO: Implement a !help function
 
 def do_command(msg):
     """Check if we need to call a keyword-style command."""
@@ -74,30 +72,22 @@ def load(directory):
     """Load plugins from the given directory."""
     files = os.listdir(directory)
     for fname in files:
+        fname = os.path.abspath(os.path.join(directory, fname))
+        
         # Recursively load directories
-        if os.path.isdir(os.path.join(directory, fname)):
-            load(os.path.join(directory, fname))
+        if os.path.isdir(fname):
+            load(fname)
             continue
-        # Convert files to python module names
-        elif fname.endswith('.py') and not fname.startswith('_'):
-            modulename = "%s.%s" % (directory.replace('/', '.'),
-                                    fname.rsplit('.py', 1)[0])
-        # Find loadable packages too, ignore the root-level plugins dir
-        elif fname == '__init__.py' and directory != "plugins":
-            modulename = directory.replace('/', '.')
-        # Ignore all other files
-        else:
-            logging.debug("Ignore %s", fname)
+        # Only load .py files
+        elif fname.startswith("_") or not fname.endswith(".py"):
             continue
         
-        # Import+reload the module
-        logging.debug("Found module '%s'", modulename)
+        # Import the module
+        logging.debug("Found module '%s'", fname)
         try:
-            __import__(modulename)
-            module = sys.modules[modulename]
-            reload(module)
+            module = imp.load_source(fname[:-3], fname)
         except Exception as err:
-            logging.warn("Failed to load module %s: %s %s", modulename, type(err), err)
+            logging.warn("Failed to import module %s: %s %s", fname, type(err), err)
             continue
         
         # TODO: Handle errors gracefully
