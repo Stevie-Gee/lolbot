@@ -68,24 +68,36 @@ def handle(msg):
         th.setDaemon(True)
         th.start()
 
-def load(directory):
+def load(directory, package=None):
     """Load plugins from the given directory."""
     files = os.listdir(directory)
     for fname in files:
         fname = os.path.abspath(os.path.join(directory, fname))
         
-        # Recursively load directories
+        # If we find a directory, attempt to import it as a package
         if os.path.isdir(fname):
-            load(fname)
+            logging.debug("Attempting package %s", fname)
+            try:
+                triple = imp.find_module(os.path.basename(fname), [os.path.dirname(fname)])
+                imp.load_module(os.path.basename(fname), *triple)
+            except ImportError:
+                # If it isn't a package, just load any modules within
+                load(fname)
+            else:
+                # If we loaded it as a package, import modules as a package
+                load(fname, package=os.path.basename(fname))
             continue
         # Only load .py files
         elif fname.startswith("_") or not fname.endswith(".py"):
             continue
         
         # Import the module
-        logging.debug("Found module '%s'", fname)
+        mname = os.path.basename(fname[:-3])
+        if package:
+            mname = package + '.' + mname
+        logging.debug("Found module '%s'", mname)
         try:
-            module = imp.load_source(fname[:-3], fname)
+            module = imp.load_source(mname, fname)
         except Exception as err:
             logging.warn("Failed to import module %s: %s %s", fname, type(err), err)
             continue
