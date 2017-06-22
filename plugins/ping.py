@@ -7,6 +7,7 @@ import logging
 import bot_utils
 import config
 
+@bot_utils.handler
 def handle(msg):
     if msg.get("t") == "MESSAGE_CREATE":
         content = msg.get("d").get("content")
@@ -18,9 +19,9 @@ def handle(msg):
             reply = "!bar " + msg.get("d").get("content").split(' ', 1)[1]
         else:
             return
-        
         bot_utils.reply(msg, reply)
 
+@bot_utils.command("ping")
 def command(msg):
     """Reply with {cc}pong, and any args passed to the original {cc}ping."""
     content = msg.get("d").get("content")
@@ -31,9 +32,8 @@ def command(msg):
     
     bot_utils.reply(msg, reply)
 
-# Commands as a dict
-COMMANDS = {
-    "ping": command,
-    # Add this so that !foo isn't an 'unrecognised command'
-    "foo": lambda msg: None,
-}
+@bot_utils.command("foo")
+def dofoo(msg):
+    """Reply with {cc}bar, and any args passed to the original {cc}foo"""
+    # This is just a placeholder so !foo isn't treated as an unrecognised command
+    pass

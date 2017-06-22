@@ -5,6 +5,7 @@ Send arbitrary messages via bot.
 import re
 import bot_utils
 
+@bot_utils.command("say")
 def command(msg):
     """Send arbitrary commands to the specified destination. Only works for channels right now."""
     content = msg.get("d").get("content")
@@ -29,7 +30,3 @@ def command(msg):
     fake = dict(msg)
     fake["d"]["channel_id"] = dest
     bot_utils.reply(fake, response)
-
-COMMANDS = {
-    "say": command,
-}

@@ -18,7 +18,6 @@ import threading
 
 import bot_utils
 import config
-from plugins import help_plugin
 
 # Dict mapping keyword-style chat commands to their callables
 COMMANDS = {}
@@ -26,6 +25,7 @@ COMMANDS = {}
 # List of callables to handle every received websocket message
 PLUGINS = []
 
+@bot_utils.handler
 def do_command(msg):
     """Check if we need to call a keyword-style command."""
     # If this isn't a spoken chat message, ignore it
@@ -56,9 +56,6 @@ def do_command(msg):
         COMMANDS[content](msg)
     else:
         bot_utils.reply(msg, "Unknown command: _{0}{1}_.".format(config.COMMAND_CHAR, content))
-
-# Add this to the plugins list
-PLUGINS.append(do_command)
 
 def handle(msg):
     """Distribute a received message to all relevant plugins."""
@@ -101,17 +98,9 @@ def load(directory, package=None):
         except Exception as err:
             logging.warn("Failed to import module %s: %s %s", fname, type(err), err)
             continue
-        
-        # TODO: Handle errors gracefully
-        # Note which modules have generic message handling
-        if getattr(module, "handle", None):
-            logging.info("Loaded plugin %s", module)
-            PLUGINS.append(module.handle)
-        # Note which modules provide commands
-        if getattr(module, "COMMANDS", None):
-            for keyword, function in  module.COMMANDS.iteritems():
-                logging.info("Loaded command %s", keyword)
-                COMMANDS[keyword] = function
     
-    # Special handling for !help
-    help_plugin.init(COMMANDS)
+    # Now that we've imported all modules, grab the plugins
+    # This may be called multiple times, so make it idempotent
+    COMMANDS.update(bot_utils._COMMANDS)
+    global PLUGINS
+    PLUGINS = bot_utils._HANDLERS

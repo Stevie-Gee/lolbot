@@ -341,6 +341,7 @@ AFTERMATH = [
     'bends over and exposes her ass, just before spreading her cheeks and releasing hundreds of spiders from her rectum!',
     ]
 
+@bot_utils.command("summon")
 def call(msg):
     """Summon a random loli for you."""
     content = msg.get("d").get("content")
@@ -362,9 +363,3 @@ def call(msg):
         random.choice(AFTERMATH),
         )
     bot_utils.reply(msg, text)
-
-HELP = """Summons a friend for you to play with."""
-
-COMMANDS = {
-    "summon": call,
-}

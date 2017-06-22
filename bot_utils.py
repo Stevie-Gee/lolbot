@@ -2,6 +2,7 @@
 Functions that might be useful for plugins.
 """
 
+import logging
 import requests
 try:
     import urllib3
@@ -62,3 +63,19 @@ def reply(msg, response):
                 )
         else:
             raise
+
+_COMMANDS = {}
+def command(cword):
+    """Decorator to flag a function as handling a given !command."""
+    def decor(func):
+        _COMMANDS[cword.lower()] = func
+        logging.info("Loaded command %s", cword)
+        return func
+    return decor
+
+_HANDLERS = []
+def handler(func):
+    """Decorator to flag a function as handling all Discord events."""
+    _HANDLERS.append(func)
+    logging.info("Loaded plugin %s", func)
+    return func

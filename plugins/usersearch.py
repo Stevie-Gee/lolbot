@@ -24,7 +24,7 @@ ALIASES = {}
 # Extra kwargs to pass to the http handler
 HTTP_KWARGS = getattr(config, "USERSEARCH_HTTP_KWARGS", {})
 
-
+@bot_utils.command("u")
 def command_search(msg):
     """Return the lolicit profile for the given user."""
     # Get either the first argument after the command, or the userID
@@ -76,6 +76,7 @@ def prettyprint(uinfo):
     returnstring = "**{username}** - *{usertitle}* | **{posts}** posts | **{reputation}** rep | Member for **{timestring}** {url}{userid}"
     return returnstring.format(**uinfo)
 
+@bot_utils.command("alias")
 def command_add(msg):
     """Add a new alias."""
     if msg["d"].get("author", {}).get("id") not in config.ADMINS:
@@ -96,6 +97,7 @@ def command_add(msg):
     write_aliases(config.USERSEARCH_ALIASES_FNAME)
     bot_utils.reply(msg, "<@{0}> is now {1} on the site".format(uid, nick))
 
+@bot_utils.command("dealias")
 def command_del(msg):
     """Remove an alias."""
     if msg["d"].get("author", {}).get("id") not in config.ADMINS:
@@ -161,12 +163,6 @@ def search_nick(nick):
     for line in result.split('\n'):
         key, uinfo[key] = line.split(' ', 1)
     return uinfo
-
-COMMANDS = {
-    "u": command_search,
-    "alias": command_add,
-    "dealias": command_del,
-}
 
 # On init, read aliases from file
 try:

@@ -5,6 +5,7 @@ Get a channel's discord ID without having to trawl through JSON.
 import re
 import bot_utils
 
+@bot_utils.command("channel")
 def command(msg):
     """Return the Discord ID of the mentioned channel, or the ID of the channel where the message was sent."""
     content = msg.get("d").get("content")
@@ -19,7 +20,3 @@ def command(msg):
         userid = msg["d"]["channel_id"]
         reply = "Discord channel ID %s" % userid
     bot_utils.reply(msg, reply)
-
-COMMANDS = {
-    "channel": command,
-}

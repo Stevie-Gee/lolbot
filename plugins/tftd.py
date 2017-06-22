@@ -230,12 +230,7 @@ THOUGHTS = [
     "Zeal is its own excuse."
     ]
 
+@bot_utils.command("thought")
 def call(msg):
     """Thought for the day."""
     bot_utils.reply(msg, "Thought for the day: %s" % random.choice(THOUGHTS))
-
-HELP = """Thought for the day"""
-
-COMMANDS = {
-    "thought": call,
-}

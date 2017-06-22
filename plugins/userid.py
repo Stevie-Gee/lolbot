@@ -5,6 +5,7 @@ Get a user's discord ID without having to trawl through JSON.
 import re
 import bot_utils
 
+@bot_utils.command("uid")
 def command(msg):
     """Return the Discord ID of the mentioned user, or the ID of the user who sent the message."""
     content = msg.get("d").get("content")
@@ -19,7 +20,3 @@ def command(msg):
         userid = msg["d"]["author"]["id"]
         reply = "Discord UserID %s" % userid
     bot_utils.reply(msg, reply)
-
-COMMANDS = {
-    "uid": command,
-}

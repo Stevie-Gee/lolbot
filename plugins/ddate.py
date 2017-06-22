@@ -17,6 +17,7 @@ SEASONS = ['Chaos',
            'Bureaucracy',
            'Aftermath']
 
+@bot_utils.command("ddate")
 def call(msg):
     """Discordianism is cool."""
     day, weekday, season, year, istib = ddate()
@@ -65,7 +66,3 @@ def ordinalise(number):
         return "rd"
     else:
         return "th"
-
-COMMANDS = {
-    "ddate": call,
-}
