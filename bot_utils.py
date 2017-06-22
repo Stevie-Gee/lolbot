@@ -33,9 +33,6 @@ class DiscordSession(requests.Session):
         super(DiscordSession, self).__init__(*args, **kwargs)
         self.url_base = url_base
         self.auth = DiscordSession.DiscordAuth(bot_token)
-        # Allow an automatic retry since Discord seems to ungracefully
-        # drop the connection
-        self.mount('https://', requests.adapters.HTTPAdapter(max_retries=1))
     
     def request(self, method, url, **kwargs):
         modified_url = self.url_base + url
