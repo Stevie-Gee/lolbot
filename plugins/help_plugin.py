@@ -12,13 +12,13 @@ def call(msg):
     content = msg.get("d").get("content")
     if ' ' in content:
         command = content.split(None)[1].lower().strip(config.COMMAND_CHAR)
-        if command in bot_utils._COMMANDS:
-            reply = bot_utils._COMMANDS[command].__doc__ or "No help available"
+        if command in bot_utils.COMMANDS:
+            reply = bot_utils.COMMANDS[command].__doc__ or "No help available"
         else:
             reply = "Unknown command"
     else:
         reply = "Available commands: {cc}%s.\nFor help with a particular command, type _{cc}help command_"
-        helplist = bot_utils._COMMANDS.keys()
+        helplist = bot_utils.COMMANDS.keys()
         helplist.sort()
         reply %= ', {cc}'.join(helplist)
     

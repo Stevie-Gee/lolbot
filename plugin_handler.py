@@ -19,11 +19,6 @@ import threading
 import bot_utils
 import config
 
-# Dict mapping keyword-style chat commands to their callables
-COMMANDS = {}
-
-# List of callables to handle every received websocket message
-PLUGINS = []
 
 @bot_utils.handler
 def do_command(msg):
@@ -52,15 +47,15 @@ def do_command(msg):
     content = content.lower()
     
     # Is the command recognised? If so, call it
-    if content in COMMANDS:
-        COMMANDS[content](msg)
+    if content in bot_utils.COMMANDS:
+        bot_utils.COMMANDS[content](msg)
     else:
         bot_utils.reply(msg, "Unknown command: _{0}{1}_.".format(config.COMMAND_CHAR, content))
 
 def handle(msg):
     """Distribute a received message to all relevant plugins."""
     # TODO: More graceful handling of errors
-    for plug in PLUGINS:
+    for plug in bot_utils.HANDLERS:
         th = threading.Thread(target=plug, args=[msg])
         th.setDaemon(True)
         th.start()
@@ -98,9 +93,3 @@ def load(directory, package=None):
         except Exception as err:
             logging.warn("Failed to import module %s: %s %s", fname, type(err), err)
             continue
-    
-    # Now that we've imported all modules, grab the plugins
-    # This may be called multiple times, so make it idempotent
-    COMMANDS.update(bot_utils._COMMANDS)
-    global PLUGINS
-    PLUGINS = bot_utils._HANDLERS

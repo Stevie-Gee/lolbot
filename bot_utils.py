@@ -11,6 +11,12 @@ except:
 
 import config
 
+# List of all the !commands registered, and their handler functions
+COMMANDS = {}
+
+# List of all the event handlers registered
+HANDLERS = []
+
 class DiscordSession(requests.Session):
     """Custom Requests session that adds HTTP auth header, and adds the
     base URL to any requests.
@@ -64,18 +70,16 @@ def reply(msg, response):
         else:
             raise
 
-_COMMANDS = {}
 def command(cword):
     """Decorator to flag a function as handling a given !command."""
     def decor(func):
-        _COMMANDS[cword.lower()] = func
+        COMMANDS[cword.lower()] = func
         logging.info("Loaded command %s", cword)
         return func
     return decor
 
-_HANDLERS = []
 def handler(func):
     """Decorator to flag a function as handling all Discord events."""
-    _HANDLERS.append(func)
+    HANDLERS.append(func)
     logging.info("Loaded plugin %s", func)
     return func
