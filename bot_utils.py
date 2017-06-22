@@ -81,5 +81,5 @@ def command(cword):
 def handler(func):
     """Decorator to flag a function as handling all Discord events."""
     HANDLERS.append(func)
-    logging.info("Loaded plugin %s", func)
+    logging.info("Loaded handler '%s' from %s", func.__name__, func.func_globals.get("__file__"))
     return func
