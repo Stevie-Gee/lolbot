@@ -15,7 +15,7 @@ import config
 COMMANDS = {}
 
 # List of all the event handlers registered
-HANDLERS = []
+HANDLERS = set()
 
 class DiscordSession(requests.Session):
     """Custom Requests session that adds HTTP auth header, and adds the
@@ -77,6 +77,6 @@ def command(cword):
 
 def handler(func):
     """Decorator to flag a function as handling all Discord events."""
-    HANDLERS.append(func)
+    HANDLERS.add(func)
     logging.info("Loaded handler '%s' from %s", func.__name__, func.func_globals.get("__file__"))
     return func
