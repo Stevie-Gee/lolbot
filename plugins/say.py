@@ -6,6 +6,7 @@ import re
 import bot_utils
 
 @bot_utils.command("say")
+@bot_utils.admin_only
 def command(msg):
     """Send arbitrary commands to the specified destination. Works for channels and @Users."""
     content = msg.get("d").get("content")

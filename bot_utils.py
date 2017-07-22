@@ -2,6 +2,7 @@
 Functions that might be useful for plugins.
 """
 
+from functools import wraps
 import logging
 import re
 import requests
@@ -84,6 +85,17 @@ def handler(func):
     HANDLERS.add(func)
     logging.info("Loaded handler '%s' from %s", func.__name__, func.func_globals.get("__file__"))
     return func
+
+def admin_only(func):
+    """Decorator to flag a function as only usable by ADMINS."""
+    @wraps(func)
+    def decorated_f(msg):
+        if msg.get("d", {}).get("author", {}).get("id") not in config.ADMINS:
+            reply(msg, "Sorry, only authorised users can do this")
+            return
+        else:
+            return func(msg)
+    return decorated_f
 
 def get_dm(user):
     """Given a userid, get a DM session id."""
