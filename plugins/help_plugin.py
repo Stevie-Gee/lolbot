@@ -22,7 +22,7 @@ def call(msg):
         helplist.sort()
         reply %= ', {cc}'.join(helplist)
     
-    if not reply.endswith('.'):
+    if reply[-1] not in ('.', '?', '!'):
         reply += '.'
     if '{cc}' in reply:
         reply = reply.format(cc=config.COMMAND_CHAR)
