@@ -3,6 +3,7 @@ Functions that might be useful for plugins.
 """
 
 import logging
+import re
 import requests
 try:
     import urllib3
@@ -16,6 +17,9 @@ COMMANDS = {}
 
 # List of all the event handlers registered
 HANDLERS = set()
+
+# Cache DM channels we have open
+DM_CACHE = {}
 
 class DiscordSession(requests.Session):
     """Custom Requests session that adds HTTP auth header, and adds the
@@ -80,3 +84,19 @@ def handler(func):
     HANDLERS.add(func)
     logging.info("Loaded handler '%s' from %s", func.__name__, func.func_globals.get("__file__"))
     return func
+
+def get_dm(user):
+    """Given a userid, get a DM session id."""
+    # User ID could be a naked ID or a bracket-wrapped format
+    matches = re.match(r'\<@(\d+)\>', user)
+    if matches:
+        user = matches.group(1)
+    if user in DM_CACHE:
+        return DM_CACHE[user]
+    
+    response = HTTP_SESSION.post("/users/@me/channels",
+        json={"recipient_id": user},
+        )
+    dest = response.json()["id"]
+    DM_CACHE[user] = dest
+    return dest

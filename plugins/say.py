@@ -7,7 +7,7 @@ import bot_utils
 
 @bot_utils.command("say")
 def command(msg):
-    """Send arbitrary commands to the specified destination. Only works for channels right now."""
+    """Send arbitrary commands to the specified destination. Works for channels and @Users."""
     content = msg.get("d").get("content")
     try:
         _, dest, response = content.split(None, 2)
@@ -16,10 +16,9 @@ def command(msg):
         bot_utils.reply(msg, reply)
         return
     
+    # User DM IDs are different from their user IDs
     if dest.startswith('<@'):
-        reply = "Sorry, I don't know how to DM right now."
-        bot_utils.reply(msg, reply)
-        return
+        dest = bot_utils.get_dm(dest)
     
     # Dest could be a naked ID or a bracket-wrapped format
     matches = re.match(r'\<.(\d+)\>', dest)
