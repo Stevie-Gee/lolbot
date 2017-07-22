@@ -1,54 +1,62 @@
 """
  View object for the Uno package. Handles all output to the IRC server.
 """
+from collections import defaultdict
+import re
 
+import bot_utils
 from . import Models
 
-# If True, _notice() and _privmsg() will print to stdout instead of sending
+# If True, _privmsg() and _privmsg() will print to stdout instead of sending
 DEBUG = False
 
-# Make a dictionary of handy IRC control codes
-# I prefer a dictionary to constants because then I can use Card.colour
-# directly on this to get a colour code.
-IRC_STRINGS = {
-    'bold': '\x02',
-    'colour': '\x03',
-    'normal': '\x0f',
-}
-# Colours
-IRC_STRINGS['red'] = IRC_STRINGS['bold'] + IRC_STRINGS['colour'] + '01,04'
-IRC_STRINGS['green'] = IRC_STRINGS['bold'] + IRC_STRINGS['colour'] + '01,03'
-IRC_STRINGS['yellow'] = IRC_STRINGS['bold'] + IRC_STRINGS['colour'] + '01,08'
-IRC_STRINGS['blue'] = IRC_STRINGS['bold'] + IRC_STRINGS['colour'] + '00,12'
 
-
-def card_string(card, discard_pile = False):
-    """Returns an IRC-formatted string representing the given card.
+def card_format(hand, discard_pile=False):
+    """Given one (or more) cards, format them into a pretty coloured string.
     
     If `discard_pile` is True, this will also display the current colour for
     wild cards. This is because when a wild is on the discard pile it has a
     colour set, but when it's in someone's hand it does not.
     """
-    # Non-wild cards are easy
-    if not card.is_wild():
-        string = "{colour_format} {card} {normal}"
-        return string.format(colour_format = IRC_STRINGS[card.colour],
-                             card = card.denomination,
-                             normal = IRC_STRINGS['normal'])
+    # Make sure the hand is sorted
+    if isinstance(hand, Models.Card):
+        hand = [hand]
+    hand = list(hand)
+    hand.sort()
     
-    # Wild cards require a rainbow string
-    elif card.denomination == 'wild':
-        string = "{red}w{green}i{yellow}l{blue}d{normal}"
-    else:
-        string = "{red}w{green}il{yellow}d{blue}4{normal}"
+    # Sort by colour
+    colours = defaultdict(lambda: [])
+    for card in hand:
+        if card.denomination in ('wild', 'wild4') and not discard_pile:
+            colours['white'] = card
+        else:
+            colours[card.colour] = card
     
-    # And possibly their effective colour afterwards
-    if discard_pile:
-        string += " {colour_format}{colour}{normal}".format(
-            colour_format = IRC_STRINGS[card.colour],
-            colour = card.colour,
-            normal = IRC_STRINGS['normal'])
-    return string.format(**IRC_STRINGS)
+    # Produce output
+    output = []
+    # Green and red are coupled together
+    if 'green' in colours and 'red' in colours:
+        output.append("[{0}]({1})".format(
+            " ".join(card.denomination for card in colours['green']),
+            " ".join(card.denomination for card in colours['red']),
+            ))
+    elif 'green' in colours:
+        output.append("[{0}]()".format(
+            " ".join(card.denomination for card in colours['green']),
+            ))
+    elif 'red' in colours:
+        output.append("[ ]({0})".format(
+            " ".join(card.denomination for card in colours['red']),
+            ))
+    # Yellow, blue, and white are independently highlighted
+    if 'yellow' in colours:
+        output.append("< {0} >".format(" ".join(card.denomination for card in colours['yellow'])))
+    if 'blue' in colours:
+        output.append("<{0}>".format("> <".join(card.denomination for card in colours['blue'])))
+    if 'white' in colours:
+        output.append(" ".join(card.denomination for card in colours['blue']))
+    return " ".join(output)
+
 
 class Uno_View(object):
     """The sole view object."""
@@ -82,7 +90,7 @@ class Uno_View(object):
             self._privmsg("{0} passed their turn.".format(player))
         # They played a card
         else:
-            msg = "{0} plays a {1}.".format(player, card_string(self.game.get_top_card(), True))
+            msg = "{0} plays a {1}.".format(player, card_format(self.game.get_top_card(), True))
             self._privmsg(msg)
             
             # Check for a special effects card
@@ -132,11 +140,8 @@ class Uno_View(object):
             player = self.game.get_player(player)
         
         # Build an IRC-format string for each card
-        card_strings = []
-        for card in player.last_draw:
-            card_strings.append(card_string(card))
-        
-        self._notice("You drew: {0}".format(', '.join(card_strings)), player)
+        card_strings = card_format(player.last_draw)
+        self._privmsg("You drew: {0}".format(card_strings), player)
     
     def end(self):
         """Declares that the game was ended early."""
@@ -148,7 +153,7 @@ class Uno_View(object):
         
         If `player` is not specified, the error will go to the entire channel.
         """
-        self._notice("Sorry, {0}".format(error), player)
+        self._privmsg("Sorry, {0}".format(error), player)
     
     def joined(self, player):
         """Report that someone joined the game."""
@@ -167,20 +172,6 @@ class Uno_View(object):
         
         self._privmsg(msg.format(self.player_string(cur),
                                  self.player_string(nex)))
-    
-    def _notice(self, msg, destination = None):
-        """Send a NOTICE to the specified Player.
-        
-        If no user is specified, send it to the channel instead.
-        """
-        if not destination:
-            destination = self.channel 
-        to_send = "NOTICE {0} :{1}".format(destination, msg)
-        
-        if DEBUG:
-            print repr(to_send)
-        else:
-            self.server.send(to_send)
     
     def player_string(self, player):
         """Return a string giving the player's name, and how many cards
@@ -224,19 +215,28 @@ class Uno_View(object):
         # Join the strings and send
         self._privmsg("Current players: " + ', '.join(player_strings))
     
-    def _privmsg(self, msg, destination = None):
+    def _privmsg(self, msg, player=None):
         """Send a PRIVMSG to the specified Player.
         
         If no user is specified, send it to the channel intead.
         """
-        if not destination:
-            destination = self.channel 
-        to_send = "PRIVMSG {0} :{1}".format(destination, msg)
+        # Add highlighting (colouring)
+        to_send = "```Markdown\n{0}```".format(msg)
         
-        if DEBUG:
-            print repr(to_send)
+        # Get our destination ID
+        if player:
+            destination = bot_utils.get_dm(player)
         else:
-            self.server.send(to_send)
+            destination = self.channel
+        
+        # Sanitise in case we have <> wrapper around the ID
+        matches = re.match(r'\<.(\d+)\>', destination)
+        if matches:
+            destination = matches.group(1)
+        
+        # Hijack the bot_utils.reply function
+        fake = {"d": {"channel_id": destination}}
+        bot_utils.reply(fake, to_send)
     
     def show_hand(self, player):
         """Tell a player what cards they have. This message is private.
@@ -244,11 +244,8 @@ class Uno_View(object):
         Assume that `player` is the IRC nickname of the player.
         """
         cards = self.game.get_player(player).get_cards()
-        card_strings = []
-        for card in cards:
-            card_strings.append(card_string(card))
-        
-        self._notice("Your cards are {0}".format(', '.join(card_strings)), player)
+        card_strings = card_format(cards)
+        self._privmsg("Your cards are {0}".format(card_strings), player)
     
     def start(self):
         """Declares that the game has started."""
@@ -259,7 +256,7 @@ class Uno_View(object):
     
     def top_card(self):
         """Tell everyone what the top card of the discard pile is."""
-        card = card_string(self.game.get_top_card(), True)
+        card = card_format(self.game.get_top_card(), True)
         self._privmsg("The top card is {0}".format(card))
     
     def win(self):

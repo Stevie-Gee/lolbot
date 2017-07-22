@@ -495,7 +495,7 @@ class Card(object):
     Represents a card.
     """
     # The colours. Note that this order determines sorting.
-    colours = ('red', 'green', 'yellow', 'blue')
+    colours = ('green', 'red', 'yellow', 'blue')
     
     # The denominations. Wild should come before wild4, otherwise 'w g' would be
     # interpreted as 'wild4 green' instead of 'wild green'.
