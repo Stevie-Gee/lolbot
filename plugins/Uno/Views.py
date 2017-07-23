@@ -5,7 +5,7 @@ from collections import defaultdict
 import re
 
 import bot_utils
-from . import Models
+import Models
 
 
 def card_format(hand, discard_pile=False):

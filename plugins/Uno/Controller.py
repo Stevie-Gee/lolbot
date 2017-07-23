@@ -4,9 +4,12 @@
  Also contains a heap of Command objects for passing stuff to the Uno_Controller.
 """
 
+from functools import wraps
+
+import bot_utils
 import config
-from . import Views
-from . import Models
+import Views
+import Models
 
 # Global dictionary of Uno_Controller objects.
 # Games are accessed by concatenating server hostname and channel.
@@ -20,6 +23,18 @@ def get_game(msg):
         return GAMES[key]
     except KeyError:
         return None
+
+def needs_game(func):
+    """Decorator to fetch the Uno game relating to the given message.
+    If no game is currently active, tell the user and exit."""
+    @wraps(func)
+    def decorated_f(msg):
+        game = get_game(msg)
+        if not game:
+            bot_utils.reply(msg, "Error, no game is currently active.")
+            return
+        return func(msg, game)
+    return decorated_f
 
 class Uno_Controller(object):
     """Handles all the commands in a single object."""
@@ -193,114 +208,88 @@ class Uno_Controller(object):
 ############################################################################
 # Here we handle interfacing between irc messages and the controller class #
 ############################################################################
-# This dict lists all the uno commands and their help messages
-uno_commands = {
-    'draw': 'Draw a card from the deck.',
-    'cards': 'Find out what cards are in your hand.',
-    'hand': 'Alias for cards.',
-    'join': 'Join a new or in-progress game.',
-    'leave': 'Leave a game.',
-    'pass': 'Pass your turn. You must draw before you can pass.',
-    'play': "Play a card. E.g. 'play r4' to play a red four.",
-    'players': 'List all current players, and (if applicable) how many cards they have.',
-    'start': 'Start the game. You must have created a game with the uno command first.',
-    'stop': 'Stop an existing game.',
-    'top': 'Show the top card of the discard pile.',
-    'turn': 'Show whose turn it is',
-}
-
-class Uno_Command(Command):
-    """Handles translating irc !commands into Uno_Controller methods."""
-    def __init__(self):
-        global uno_commands
-        self.command = 'uno'
-        self.aliases = uno_commands.keys()
+@bot_utils.command('uno')
+def uno_start(msg):
+    """Creates a game of uno. Other commands are:
+    {cc}draw, {cc}hand, {cc}join, {cc}leave, {cc}pass, {cc}play, {cc}players, {cc}start, {cc}stop, {cc}top, {cc}turn"""
+    game = get_game(msg)
+    if game:
+        bot_utils.reply(msg,
+            "There is already a game in progress (owned by {0})".format(game.owner))
+        return
     
-    def call(self, msg, server):
-        """Handle a command call."""
-        # Extract the !command from the message
-        # Yes, this should probably be part of the msg class
-        if msg.trailing.startswith('\x03'):
-            # Remove leading colour codes
-            command = re.sub(r'^\x03\d\d?(\,\d\d?)?', '', msg.trailing)
-        else:
-            command = msg.trailing
-        if not command.startswith(server.getcchar()):
-            return
-        command = command.replace(server.getcchar(), '', 1).lower()
-        if ' ' in command:
-            command = command.split(' ', 1)[0]
-        
-        # See if there's an uno game active on this channel
-        game = get_game(msg)
-        
-        # Handle the !uno command separately
-        if command == 'uno':
-            if game:
-                reply = "There is already a game in progress (owned by {0})"
-                server.replyto(msg, reply.format(game.owner))
-                return
-            
-            game = Uno_Controller(msg, server)
-            GAMES[game.key] = game
-            reply = "{0} started a game of uno! Type {1}join to join."
-            server.replyto(msg, reply.format(game.owner, server.getcchar()))
-            return
-        
-        # For all other commands, there must be a game existing
-        if not game:
-            server.replyto(msg, "Error, no game is currently active.")
-            return
-        
-        # Any other logic is handled by the Uno_Controller
-        if command == 'draw':
-            game.draw_card(msg)
-        elif command in ('cards', 'hand'):
-            game.get_hand(msg)
-        elif command == 'join':
-            game.join(msg)
-        elif command == 'leave':
-            game.leave(msg)
-        elif command == 'pass':
-            game.pass_turn(msg)
-        elif command == 'play':
-            game.play(msg)
-        elif command == 'players':
-            game.players(msg)
-        elif command == 'start':
-            game.start(msg)
-        elif command == 'stop':
-            game.end_game(msg)
-        elif command == 'top':
-            game.top_card(msg)
-        elif command == 'turn':
-            game.get_turn(msg)
-        else:
-            # This shouldn't happen
-            server.replyto("Error, no action configured for this uno command.")
-    
-    def help(self, msg, server):
-        """Handle the help commands.
-        
-        You can call this with '!help uno' or '!help uno <command>"""
-        global uno_commands
-        # Was there a command after the 'uno'?
-        arg_parts = msg.commargs.split(' ')
-        if len(arg_parts) == 1:
-            # No, there wasn't. Return help for the !uno command.
-            answer =  "Creates a game of uno. For help with a particular "
-            # The newline on the end is a really nasty hack to break the !help commmand,
-            # so it doesn't list "aliases" of the !uno command
-            answer += "command, type {0}help uno command. Current commands are: {1}\n"
-            return answer.format(server.getcchar(), ', '.join(self.aliases))
-        
-        # Yes, figure out what it was.
-        command = arg_parts[1]
-        if command not in uno_commands:
-            return "Unrecognised command."
-        else:
-            return uno_commands[command] + "\n"
+    game = Uno_Controller(msg)
+    GAMES[game.key] = game
+    reply = "{0} started a game of uno! Type {1}join to join."
+    server.replyto(msg, reply.format(game.owner, config.COMMAND_CHAR))
 
+@bot_utils.command('draw')
+@needs_game
+def draw(msg, game):
+    """Uno: Draw a card from the deck."""
+    game.method(msg)
+
+@bot_utils.command('stop')
+@needs_game
+def stop(msg, game):
+    """Uno: Stop an existing game."""
+    game.end_game(msg)
+
+@bot_utils.command('play')
+@needs_game
+def play(msg, game):
+    """Uno: Play a card. E.g. 'play r4' to play a red four."""
+    game.play(msg)
+
+@bot_utils.command('hand')
+@needs_game
+def hand(msg, game):
+    """Uno: Find out what cards are in your hand."""
+    game.get_hand(msg)
+
+@bot_utils.command('pass')
+@needs_game
+def pass_turn(msg, game):
+    """Uno: Pass your turn. You must draw before you can pass."""
+    game.pass_turn(msg)
+
+@bot_utils.command('turn')
+@needs_game
+def turn(msg, game):
+    """Uno: Show whose turn it is"""
+    game.get_turn(msg)
+
+@bot_utils.command('join')
+@needs_game
+def join(msg, game):
+    """Uno: Join a new or in-progress game."""
+    game.join(msg)
+
+@bot_utils.command('start')
+@needs_game
+def start(msg, game):
+    """Uno: Start the game. You must have created a game with the uno command first."""
+    game.start(msg)
+
+@bot_utils.command('top')
+@needs_game
+def top(msg, game):
+    """Uno: Show the top card of the discard pile."""
+    game.top_card(msg)
+
+@bot_utils.command('leave')
+@needs_game
+def leave(msg, game):
+    """Uno: Leave a game."""
+    game.leave(msg)
+
+@bot_utils.command('players')
+@needs_game
+def players(msg, game):
+    """Uno: List all current players, and (if applicable) how many cards they have."""
+    game.players(msg)
+
+'''
 class Uno_Kicker(Plugin):
     """Removes a player from the game if they leave/are kicked."""
     def __init__(self):
@@ -339,3 +328,4 @@ class Uno_Kicker(Plugin):
                 user = game.server.getuserlist().getuser(msg.nick)
                 if game.server == server and game.game.has_player(user):
                     game.leave(msg)
+'''
