@@ -7,9 +7,6 @@ import re
 import bot_utils
 from . import Models
 
-# If True, _privmsg() and _privmsg() will print to stdout instead of sending
-DEBUG = False
-
 
 def card_format(hand, discard_pile=False):
     """Given one (or more) cards, format them into a pretty coloured string.
@@ -61,11 +58,10 @@ def card_format(hand, discard_pile=False):
 class Uno_View(object):
     """The sole view object."""
     
-    def __init__(self, game, server, channel):
+    def __init__(self, game, channel):
         """We need to keep a record of both what game we're viewing, and where
-        to send messages (server and channel)."""
+        to send messages (channel id)."""
         self.game = game
-        self.server = server
         self.channel = channel
     
     def action_summary(self, player):

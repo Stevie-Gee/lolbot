@@ -4,11 +4,7 @@
  Also contains a heap of Command objects for passing stuff to the Uno_Controller.
 """
 
-# Disable warnings about __init__ from parent class not being called,
-# because of all the Command classes
-#pylint: disable=W0231
-
-from plugins import Command, Plugin
+import config
 from . import Views
 from . import Models
 
@@ -16,29 +12,24 @@ from . import Models
 # Games are accessed by concatenating server hostname and channel.
 GAMES = {}
 
-def get_game(msg, server):
+def get_game(msg):
     """Gets the appropriate game for a given server and message."""
     # Key is comprised of <server hostname><channel>
-    key = "{0}{1}".format(server.getconfig().host, msg.channel)
-    
-    # No game exists for this channel
-    if key not in GAMES:
-        return None
-    else:
+    try:
+        key = msg["d"]["channel_id"]
         return GAMES[key]
+    except KeyError:
+        return None
 
 class Uno_Controller(object):
     """Handles all the commands in a single object."""
-    def __init__(self, msg, server):
-        # Server we're sitting on
-        self.server = server
-        
+    def __init__(self, msg):
         # Key that we'll be stored under in GAMES
-        self.key = "{0}{1}".format(server.getconfig().host, msg.channel)
+        self.key = msg["d"]["channel_id"]
         
         # Game and View objects (Model and View)
         self.game = Models.Game()
-        self.view = Views.Uno_View(self.game, server, msg.channel)
+        self.view = Views.Uno_View(self.game, msg["d"]["channel_id"])
         
         # Player who owns the game
         self.owner = self.get_user(msg)
@@ -62,7 +53,7 @@ class Uno_Controller(object):
     def end_game(self, msg):
         """Called when someone tries to kill the game early."""
         user = self.get_user(msg)
-        if user != self.owner and not self.server.isowner(msg):
+        if user != self.owner and user not in config.ADMINS:
             self.view.error_report("only the game owner can end the game.")
         else:
             del GAMES[self.key]
@@ -90,7 +81,10 @@ class Uno_Controller(object):
     def get_user(self, msg):
         """Get the IRC User object representing the person who sent this message.
         """
-        return self.server.getuserlist().getuser(msg.nick)
+        try:
+            return msg["d"]["author"]["id"]
+        except KeyError:
+            return None
     
     def join(self, msg):
         """Called when a Player tries to join the game."""
@@ -151,7 +145,10 @@ class Uno_Controller(object):
     def play(self, msg):
         """Called when a Player tries to play a card."""
         # Initialise some variables
-        card = msg.commargs
+        if ' ' in msg["d"]["content"]:
+            card = msg["d"]["content"].split(None, 1)[1]
+        else:
+            card = ''
         player = self.get_player(msg)
         
         # Make sure the player is in the game
@@ -179,7 +176,7 @@ class Uno_Controller(object):
         user = self.get_user(msg)
         
         # Make sure the user owns the game (or the bot)
-        if user != self.owner and not self.server.isowner(msg):
+        if user != self.owner and user not in config.ADMINS:
             self.view.error_report("only the game owner can start the game.")
         else:
             try:
@@ -235,7 +232,7 @@ class Uno_Command(Command):
             command = command.split(' ', 1)[0]
         
         # See if there's an uno game active on this channel
-        game = get_game(msg, server)
+        game = get_game(msg)
         
         # Handle the !uno command separately
         if command == 'uno':
@@ -312,7 +309,7 @@ class Uno_Kicker(Plugin):
     def call(self, msg, server):
         """Call method."""
         if msg.command == 'KICK':
-            game = get_game(msg, server)
+            game = get_game(msg)
             if not game:
                 # Make sure there's actually game in this channel
                 return
@@ -326,7 +323,7 @@ class Uno_Kicker(Plugin):
                 game.leave(msg, user = user)
         
         elif msg.command == 'PART':
-            game = get_game(msg, server)
+            game = get_game(msg)
             if not game:
                 # Make sure there's actually game in this channel
                 print "NOGAME"

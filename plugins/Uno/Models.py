@@ -376,11 +376,11 @@ class Player(object):
         return not self.__eq__(other)
     
     def __repr__(self):
-        return "<Player: {0}>".format(self)
+        return str(self)
     
     def __str__(self):
         """This lets us use the Player directly in string formatting."""
-        return str(self.identifier)
+        return "<@{0}>".format(self.identifier)
     
     def draw(self, count = 1):
         """Draw the specified number of cards from the deck.
