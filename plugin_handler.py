@@ -80,7 +80,7 @@ def load(directory, package=None):
                 load(fname, package=os.path.basename(fname))
             continue
         # Only load .py files
-        elif fname.startswith("_") or not fname.endswith(".py"):
+        elif os.path.basename(fname).startswith("_") or not fname.endswith(".py"):
             continue
         
         # Import the module
@@ -89,7 +89,8 @@ def load(directory, package=None):
             mname = package + '.' + mname
         logging.debug("Found module '%s'", mname)
         try:
-            module = imp.load_source(mname, fname)
+            triple = imp.find_module(os.path.basename(fname[:-3]), [os.path.dirname(fname)])
+            module = imp.load_module(mname, *triple)
         except Exception as err:
             logging.warn("Failed to import module %s: %s %s", fname, type(err), err)
             continue
