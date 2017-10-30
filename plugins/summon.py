@@ -1,7 +1,9 @@
 """Summons a random loli. Because my friends are perverts."""
 
 import random
+
 import bot_utils
+import config
 
 SUMMON = [
     'brings forth a',
@@ -238,7 +240,7 @@ AFTERMATH = [
     'sits down besides you and leans against your leg.',
     'approaches and playfully tugs at your pants.',
     'asks you for a spanking, and declares that she has been rather naughty.',
-    'goes back to SIG, because SIG is better than you.',
+    'goes back to <@{0}>, because <@{0}> is better than you.'.format(config.SELF),
     'shits in the floor and makes you clean it.',
     'spreads her legs wide, and invites you in.',
     'steals your computer and browses 4chan.',
