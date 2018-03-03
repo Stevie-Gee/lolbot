@@ -50,6 +50,9 @@ class Uno_View(object):
         top_card = self.game.get_top_card()
         msg = None
         
+        # Make sure player is a class instance, not just the indentifier
+        player = self.game.get_player(player)
+        
         # Person drew a card. We exit early here because we don't want a full
         # turn summary.
         if self.game.get_last_action() == 'draw':
@@ -107,8 +110,7 @@ class Uno_View(object):
         `player` can either be a Player object, or a player identifier.
         """
         # Convert an identifier to a Player
-        if not isinstance(player, Models.Player):
-            player = self.game.get_player(player)
+        player = self.game.get_player(player)
         
         # Build an IRC-format string for each card
         card_strings = card_format(player.last_draw)
@@ -124,14 +126,20 @@ class Uno_View(object):
         
         If `player` is not specified, the error will go to the entire channel.
         """
+        # Make sure player is a class instance, not just the indentifier
+        player = self.game.get_player(player)
         self._privmsg("Sorry, {0}".format(error), player)
     
     def joined(self, player):
         """Report that someone joined the game."""
+        # Make sure player is a class instance, not just the indentifier
+        player = self.game.get_player(player)
         self._privmsg("{0} joined the game.".format(player))
     
     def left(self, player):
         """Report that someone left the game."""
+        # Make sure player is a class instance, not just the indentifier
+        player = self.game.get_player(player)
         self._privmsg("{0} left the game.".format(player))
     
     def next_player(self):
@@ -150,6 +158,9 @@ class Uno_View(object):
         
         If the game is not in progress, only return their name
         """
+        # Make sure player is a class instance, not just the indentifier
+        player = self.game.get_player(player)
+        
         if not self.game.status == 'in progress':
             return "{0}".format(player)
         
@@ -192,6 +203,9 @@ class Uno_View(object):
         If no user is specified, send it to the channel intead.
         """
         # Get our destination ID
+        # Make sure player is a class instance, not just the indentifier
+        player = self.game.get_player(player)
+        
         if player:
             destination = bot_utils.get_dm(player.identifier)
         else:

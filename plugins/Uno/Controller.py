@@ -46,11 +46,11 @@ class Uno_Controller(object):
         self.game = Models.Game()
         self.view = Views.Uno_View(self.game, msg["d"]["channel_id"])
         
-        # Player who owns the game
-        self.owner = self.get_user(msg)
-        
         # The creator of the game obviously wants to play
         self.join(msg)
+        
+        # Player who owns the game
+        self.owner = self.get_user(msg)
     
     def draw_card(self, msg):
         """Called when a Player tries to draw a card."""
@@ -97,15 +97,15 @@ class Uno_Controller(object):
         """Get the IRC User object representing the person who sent this message.
         """
         try:
-            return msg["d"]["author"]["id"]
+            return self.game.get_player(msg["d"]["author"]["id"])
         except KeyError:
             return None
     
     def join(self, msg):
         """Called when a Player tries to join the game."""
-        user = self.get_user(msg)
         try:
-            self.game.add_player(user)
+            self.game.add_player(msg["d"]["author"]["id"])
+            user = self.get_user(msg)
             self.view.joined(user)
         except Models.UnoError as err:
             self.view.error_report(err)
@@ -211,7 +211,7 @@ class Uno_Controller(object):
 @bot_utils.command('uno')
 def uno_start(msg):
     """Creates a game of uno. Other commands are:
-    {cc}draw, {cc}hand, {cc}join, {cc}leave, {cc}pass, {cc}play, {cc}players, {cc}start, {cc}stop, {cc}top, {cc}turn"""
+    {cc}cards, {cc}draw, {cc}join, {cc}leave, {cc}pass, {cc}play, {cc}players, {cc}start, {cc}stop, {cc}top, {cc}turn"""
     game = get_game(msg)
     if game:
         bot_utils.reply(msg,
@@ -220,14 +220,14 @@ def uno_start(msg):
     
     game = Uno_Controller(msg)
     GAMES[game.key] = game
-    reply = "{0} started a game of uno! Type {1}join to join."
-    server.replyto(msg, reply.format(game.owner, config.COMMAND_CHAR))
+    response = "{0} started a game of uno! Type {1}join to join."
+    bot_utils.reply(msg, response.format(game.owner, config.COMMAND_CHAR))
 
 @bot_utils.command('draw')
 @needs_game
 def draw(msg, game):
     """Uno: Draw a card from the deck."""
-    game.method(msg)
+    game.draw_card(msg)
 
 @bot_utils.command('stop')
 @needs_game
@@ -241,9 +241,9 @@ def play(msg, game):
     """Uno: Play a card. E.g. 'play r4' to play a red four."""
     game.play(msg)
 
-@bot_utils.command('hand')
+@bot_utils.command('cards')
 @needs_game
-def hand(msg, game):
+def cards(msg, game):
     """Uno: Find out what cards are in your hand."""
     game.get_hand(msg)
 

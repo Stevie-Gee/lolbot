@@ -146,7 +146,13 @@ class Game(object):
     
     def get_player(self, identifier):
         """Return the player who matches `identifier`. Returns None if no
-        players match."""
+        players match.
+        
+        If you pass a player instance to this method, it just returns the instance.
+        """
+        if isinstance(identifier, Player):
+            return identifier
+        
         for player in self.players:
             if player == identifier:
                 return player
@@ -310,7 +316,7 @@ class Game(object):
         
         # Do we have at least two players?
         if len(self.players) < 2:
-            raise TooFewPlayersError()
+            raise TooFewPlayersError("you need at least two players to start a game")
         # Shuffle the deck
         self.discard_pile += make_deck()
         self._shuffle()
@@ -495,7 +501,7 @@ class Card(object):
     Represents a card.
     """
     # The colours. Note that this order determines sorting.
-    colours = ('green', 'red', 'yellow', 'blue')
+    colours = ('red', 'green', 'yellow', 'blue')
     
     # The denominations. Wild should come before wild4, otherwise 'w g' would be
     # interpreted as 'wild4 green' instead of 'wild green'.
