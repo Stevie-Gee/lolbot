@@ -21,39 +21,14 @@ def card_format(hand, discard_pile=False):
     hand = list(hand)
     hand.sort()
     
-    # Sort by colour
-    colours = defaultdict(lambda: [])
-    for card in hand:
-        if card.denomination in ('wild', 'wild4') and not discard_pile:
-            colours['white'] = card
-        else:
-            colours[card.colour] = card
-    
     # Produce output
     output = []
-    # Green and red are coupled together
-    if 'green' in colours and 'red' in colours:
-        output.append("[{0}]({1})".format(
-            " ".join(card.denomination for card in colours['green']),
-            " ".join(card.denomination for card in colours['red']),
-            ))
-    elif 'green' in colours:
-        output.append("[{0}]()".format(
-            " ".join(card.denomination for card in colours['green']),
-            ))
-    elif 'red' in colours:
-        output.append("[ ]({0})".format(
-            " ".join(card.denomination for card in colours['red']),
-            ))
-    # Yellow, blue, and white are independently highlighted
-    if 'yellow' in colours:
-        output.append("< {0} >".format(" ".join(card.denomination for card in colours['yellow'])))
-    if 'blue' in colours:
-        output.append("<{0}>".format("> <".join(card.denomination for card in colours['blue'])))
-    if 'white' in colours:
-        output.append(" ".join(card.denomination for card in colours['blue']))
-    return " ".join(output)
-
+    for card in hand:
+        if card.denomination in ('wild', 'wild4') and not discard_pile:
+            output.append(card.denomination)
+        else:
+            output.append(card.colour[0] + card.denomination)
+    return ' '.join(output)
 
 class Uno_View(object):
     """The sole view object."""
@@ -216,12 +191,9 @@ class Uno_View(object):
         
         If no user is specified, send it to the channel intead.
         """
-        # Add highlighting (colouring)
-        to_send = "```Markdown\n{0}```".format(msg)
-        
         # Get our destination ID
         if player:
-            destination = bot_utils.get_dm(player)
+            destination = bot_utils.get_dm(player.identifier)
         else:
             destination = self.channel
         
@@ -232,7 +204,7 @@ class Uno_View(object):
         
         # Hijack the bot_utils.reply function
         fake = {"d": {"channel_id": destination}}
-        bot_utils.reply(fake, to_send)
+        bot_utils.reply(fake, msg)
     
     def show_hand(self, player):
         """Tell a player what cards they have. This message is private.
