@@ -46,8 +46,11 @@ def do_command(msg):
     # Normalise case
     content = content.lower()
     
+    # Ignore a lone command character
+    if not content:
+        pass
     # Is the command recognised? If so, call it
-    if content in bot_utils.COMMANDS:
+    elif content in bot_utils.COMMANDS:
         bot_utils.COMMANDS[content](msg)
     else:
         bot_utils.reply(msg, "Unknown command: _{0}{1}_.".format(config.COMMAND_CHAR, content))
