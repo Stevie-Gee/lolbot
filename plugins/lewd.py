@@ -18,10 +18,11 @@ def doit(msg):
     else:
         target = "<@%s>" % msg["d"]["author"]["id"]
     
-    if '<@268286679893147649>' in target:
-        lewdness = 100.0
-    elif target in MEASUREMENTS:
+    if target in MEASUREMENTS:
         lewdness = MEASUREMENTS[target]
+    elif '<@268286679893147649>' in target or 'mina' in target.lower():
+        lewdness = random.randint(700,999) / 10
+        MEASUREMENTS[target] = lewdness
     else:
         lewdness = random.randint(0,999) / 10
         MEASUREMENTS[target] = lewdness
