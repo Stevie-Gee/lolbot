@@ -18,7 +18,7 @@ def doit(msg):
     else:
         target = "<@%s>" % msg["d"]["author"]["id"]
     
-    if '<@268286679893147649>' in content:
+    if '<@268286679893147649>' in target:
         lewdness = 100.0
     elif target in MEASUREMENTS:
         lewdness = MEASUREMENTS[target]
