@@ -200,7 +200,7 @@ def main():
             # Pass to plugins
             # Don't pass messages we've generated as this could lead to
             # infinite looping
-            if (content["d"] or {}).get("author", {}).get("id") != config.SELF:
+            if content["op"] == 0 and (content["d"] or {}).get("author", {}).get("id") != config.SELF:
                 plugin_handler.handle(content)
         
         elif msg == "HEARTBEAT":
