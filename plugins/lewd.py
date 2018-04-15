@@ -11,7 +11,7 @@ MEASUREMENTS = {}
 
 @bot_utils.command("lewd")
 def doit(msg):
-    """Some people like penis too."""
+    """Measure lewdness of target"""
     content = msg.get("d").get("content")
     if ' ' in content:
         target = content.split(' ', 1)[1].strip()
