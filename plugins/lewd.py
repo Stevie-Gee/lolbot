@@ -27,4 +27,4 @@ def doit(msg):
         lewdness = random.randint(0,999) / 10
         MEASUREMENTS[target] = lewdness
     
-    bot_utils.reply(msg, "{0} is {1:0.1f}% lewd".format(target, lewdness))
+    bot_utils.reply(msg, u"{0} is {1:0.1f}% lewd".format(target, lewdness))

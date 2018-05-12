@@ -16,7 +16,7 @@ def handle(msg):
             reply = "!bar"
         # If the !ping has content attached, match this content in the output
         elif content.startswith("!foo "):
-            reply = "!bar " + msg.get("d").get("content").split(' ', 1)[1]
+            reply = u"!bar " + msg.get("d").get("content").split(' ', 1)[1]
         else:
             return
         bot_utils.reply(msg, reply)
@@ -26,9 +26,9 @@ def command(msg):
     """Reply with {cc}pong, and any args passed to the original {cc}ping."""
     content = msg.get("d").get("content")
     if ' ' in content:
-        reply = "{0}pong {1}".format(config.COMMAND_CHAR, content.split(' ', 1)[1])
+        reply = u"{0}pong {1}".format(config.COMMAND_CHAR, content.split(' ', 1)[1])
     else:
-        reply = "{0}pong".format(config.COMMAND_CHAR)
+        reply = u"{0}pong".format(config.COMMAND_CHAR)
     
     bot_utils.reply(msg, reply)
 
