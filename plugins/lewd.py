@@ -13,9 +13,27 @@ MEASUREMENTS = {}
 def get_lewdness(subject):
     """Measure lewdness of the subject, return a float between 0 and 100"""
     if '<@268286679893147649>' in subject or 'mina' in subject.lower():
-        return random.randint(700,999) / 10
+        return weightedrand()
     else:
         return random.randint(0,999) / 10
+
+def weightedrand():
+    """Randomise the min value sent to randint"""
+    WEIGHTS = [
+        (0,     20),    # Min value, weight
+        (500,   40),
+        (700,   40),
+        ]
+    weightsum = sum(i[1] for i in WEIGHTS)
+    idx = random.randint(0, weightsum)
+    for weight in WEIGHTS:
+        if idx <= weight[1]:
+            break
+        idx -= weight[1]
+    else:
+        raise RuntimeError("Bad index %s" % idx)
+    minrand = weight[0]
+    return random.randint(minrand,999) / 10
 
 @bot_utils.command("lewd")
 def doit(msg):
