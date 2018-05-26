@@ -73,7 +73,7 @@ def prettyprint(uinfo):
     uinfo["timestring"] = timestring.strip()
     uinfo["url"] = config.USERSEARCH_PUBLIC_URL
     
-    returnstring = "**{username}** - *{usertitle}* | **{posts}** posts | **{reputation}** rep | Member for **{timestring}** {url}{userid}"
+    returnstring = u"**{username}** - *{usertitle}* | **{posts}** posts | **{reputation}** rep | Member for **{timestring}** {url}{userid}"
     return returnstring.format(**uinfo)
 
 @bot_utils.command("alias")
