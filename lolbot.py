@@ -104,6 +104,7 @@ def websocket_connect(session):
         ws_url + config.GATEWAY_VERSION,
         timeout=config.WS_TIMEOUT,
         origin="https://discordapp.com",
+        sslopt={'ca_certs':requests.utils.DEFAULT_CA_BUNDLE_PATH},
         )
     logging.debug("Connected")
     
