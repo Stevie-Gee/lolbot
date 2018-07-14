@@ -8,6 +8,12 @@ def doboobs(msg):
     reply = u"\u0460"
     bot_utils.reply(msg, reply)
 
+@bot_utils.command("butt")
+def doboobs(msg):
+    """There is no butt command"""
+    reply = u"No. There will be no 'butt' command."
+    bot_utils.reply(msg, reply)
+
 @bot_utils.command("penis")
 def dopenis(msg):
     """Some people like penis too."""
