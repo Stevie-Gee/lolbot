@@ -10,7 +10,7 @@ def doboobs(msg):
 
 @bot_utils.command("butt")
 def doboobs(msg):
-    """There is no butt command"""
+    """Because people keep asking for it..."""
     reply = u"No. There will be no 'butt' command."
     bot_utils.reply(msg, reply)
 
