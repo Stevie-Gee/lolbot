@@ -2,6 +2,7 @@
 
 import random
 import bot_utils
+import config
 
 
 @bot_utils.command("rng")
@@ -31,3 +32,28 @@ def call(msg):
         bot_utils.reply(msg, "Your number is %s. What a surprise." % randno)
     else:
         bot_utils.reply(msg, "Your number is %s." % randno)
+
+@bot_utils.command("d4")
+@bot_utils.command("d6")
+@bot_utils.command("d8")
+@bot_utils.command("d12")
+@bot_utils.command("d20")
+def dicecmd(msg):
+    """Roll one or more dice (you can specify how many to roll)"""
+    content = msg.get("d").get("content")
+    parts = content.split()
+    sides = int(parts[0].strip(config.COMMAND_CHAR).strip('dD'))
+    try:
+        count = int(parts[1])
+        if count > 100:
+            bot_utils.reply(msg, "I don't have that many dice...")
+            return
+    except ValueError:
+        bot_utils.reply(msg, "I can only roll a numeric number of dice")
+        return
+    except IndexError:
+        count = 1
+    
+    rolls = [str(random.randint(1, sides)) for _ in range(count)]
+    rollstr = "You rolled %s" % (", ".join(rolls))
+    bot_utils.reply(msg, rollstr)
