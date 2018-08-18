@@ -36,8 +36,10 @@ def call(msg):
 @bot_utils.command("d4")
 @bot_utils.command("d6")
 @bot_utils.command("d8")
+@bot_utils.command("d10")
 @bot_utils.command("d12")
 @bot_utils.command("d20")
+@bot_utils.command("d100")
 def dicecmd(msg):
     """Roll one or more dice (you can specify how many to roll)"""
     content = msg.get("d").get("content")
