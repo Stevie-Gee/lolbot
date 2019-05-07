@@ -223,7 +223,10 @@ def main():
             delay = 6
             logging.warn("Websocket appears to have died. Reconnecting in %ss...", delay)
             # Make sure the old socket is closed first
-            wsock.close()
+            try:
+                wsock.close()
+            except:
+                pass
             # Wait a little, then reconnect
             time.sleep(delay)
             clean_queue(MSGQUEUE)
@@ -274,4 +277,8 @@ if __name__ == '__main__':
         logging.error("You haven't provided a valid Discord bot token, please edit config.py")
         raise RuntimeError("You haven't provided a valid Discord bot token, please edit config.py")
     
-    main()
+    try:
+        main()
+    except Exception as err:
+        logging.error("Main thread crashed: %s %s", repr(err), err)
+        raise
