@@ -1997,5 +1997,9 @@ QUESTIONS = [
 @bot_utils.command("grillme")
 def call(msg):
     """Ask the caller a fairly personal question"""
+    # BC I can...
+    if msg["d"]["author"]["id"] == '419882227355222016':
+        if random.getrandbits(1):
+            return
     reply = "<@%s>: %s" % (msg["d"]["author"]["id"], random.choice(QUESTIONS))
     bot_utils.reply(msg, reply)
