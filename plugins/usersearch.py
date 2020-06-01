@@ -27,19 +27,30 @@ HTTP_KWARGS = getattr(config, "USERSEARCH_HTTP_KWARGS", {})
 @bot_utils.command("u")
 def command_search(msg):
     """Return the lolicit profile for the given user."""
-    # Get either the first argument after the command, or the userID
-    # of the sender if no args provided
+    # If we have an argument provided, use that
     if ' ' in msg["d"].get("content"):
         nick = msg["d"].get("content").split(None, 1)[1]
-    else:
-        nick = "<@{0}>".format(msg["d"].get("author", {}).get("id"))
+        
+        if nick.startswith('<@'):
+            # If there's a UID provided, try to alias it (or fail)
+            nick = ALIASES.get(nick.strip('<!@>'))
+            if not nick:
+                bot_utils.reply(msg, "Sorry, can you do that again without the @?")
+                return
+        else:
+            # Take the argument as a literal username
+            pass
     
-    # If we have a discord ID, try to convert it to a site nickname
-    if re.match(r'\<\@(\d+)\>', nick):
-        nick = ALIASES.get(nick[2:-1], '')
+    # No arg provided, query the user who posted the message
+    else:
+        # Do we have a UID alias for this?
+        uid = "<@{0}>".format(msg["d"].get("author", {}).get("id"))
+        nick = ALIASES.get(uid.strip('<!@>'))
+        # If no UID, get the username (or aliased nick)
         if not nick:
-            bot_utils.reply(msg, "Discord user has no mapping to site")
-            return
+            nick = msg["d"].get("member", {}).get("nick")
+        if not nick:
+            nick = msg["d"].get("author", {}).get("username")
     
     # Do search
     try:
