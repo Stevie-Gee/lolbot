@@ -58,7 +58,7 @@ def reply(msg, response):
     """
     channel_id = msg.get("d").get("channel_id")
     try:
-        HTTP_SESSION.post(
+        return HTTP_SESSION.post(
             "/channels/{1}/messages".format(config.BASE_URL, channel_id),
             json={"content": response},
             )
@@ -68,7 +68,7 @@ def reply(msg, response):
         if (isinstance(err.message, urllib3.exceptions.ProtocolError)
                 and err.message.args
                 and err.message.args[0].lower().startswith("connection aborted")):
-            HTTP_SESSION.post(
+            return HTTP_SESSION.post(
                 "/channels/{1}/messages".format(config.BASE_URL, channel_id),
                 json={"content": response},
                 )
