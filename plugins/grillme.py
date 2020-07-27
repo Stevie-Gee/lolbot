@@ -2001,7 +2001,6 @@ def call(msg):
     if Q_INDEX < 0:
         random.shuffle(QUESTIONS)
         Q_INDEX = len(QUESTIONS)
-        bot_utils.reply(msg, "shuffling...")
     
     Q_INDEX -= 1
     reply = "<@%s>: %s" % (msg["d"]["author"]["id"], QUESTIONS[Q_INDEX])
