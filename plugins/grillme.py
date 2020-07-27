@@ -454,8 +454,8 @@ QUESTIONS = [
     "How many pairs of shoes do you own?",
     "If you were prime miniser/ruler of the world what laws would you make?",
     "If you were a super hero what powers would you have?",
-    "and what would your hero name be?",
-    "and what outfit would you wear?",
+    "If you were a super hero what would your name be?",
+    "If you were a super hero what outfit would you wear?",
     "What was your last dream about?",
     "What would you do if you won the lottery?",
     "Would you like to build/design your own house?",
@@ -612,7 +612,6 @@ QUESTIONS = [
     "How do you have your eggs?",
     "Whats your favourite saying?",
     "Have you ever been in a tug of war?",
-    "and did you win?",
     "Can you stand on your hands unassisted?",
     "What do you have on your fridge door?",
     "Do you love or hate myspace?",
@@ -661,7 +660,6 @@ QUESTIONS = [
     "Do you know the dance steps to an annoying cheesey pop song?",
     "Do you prefer straight or bendy straws?",
     "Have you ever entered a talent contest?",
-    "and did you win?",
     "Do you like poetry?",
     "Are you a bad loser?",
     "Which would you choose?, Jelly or Ice Cream?",
@@ -777,8 +775,7 @@ QUESTIONS = [
     "What are cooler, Dinosaurs or Dragons?",
     "Have you ever made your own ice lollies?",
     "Have you ever made your own Ice cream?",
-    "Which forgeign language did you have to learn at school?",
-    "and do you still remember enough to hold a conversation in that language?",
+    "Which forgeign language did you have to learn at school, and do you still remember enough to hold a conversation?",
     "Do you know CPR?",
     "Do you have any swimming badges?",
     "Do you prefer digital or rotary/analogue clocks?",
@@ -935,9 +932,8 @@ QUESTIONS = [
     "Have you ever been caught in a comprimising position, even despite a valid explanation?",
     "Have you ever tried to make your own alcohol?",
     "If you were ruler of your own country what would you call it?",
-    "And what title would you give yourself?",
-    "If you invented a monster what would you call it?",
-    "And what features would it have?",
+    "If you were ruler of your own country what title would you give yourself?",
+    "If you invented a monster what would you call it, and what features would it have?",
     "Have you ever had a dream you chased only to be let down when you achived it?",
     "Is there anything about the opposite sex you just don't understand or comprehend?",
     "Who was your favourite teacher at school and why?",
@@ -1010,8 +1006,7 @@ QUESTIONS = [
     "You are walking to work. There is a dog drowning in the canal on the side of the street. Your boss told you if you are late one more time you're fired. Do you save the dog?",
     "Are you the kind of friend you'd want to have as a friend yourself?",
     "Do you have any questions or queries about things you're just to scared or embarassed to ask anyone about?",
-    "If you were a wrestler what would your stage name be?",
-    "and what would your special move be called?",
+    "If you were a wrestler what would your stage name be, and what would your special move be called?",
     "Whats the most interesting thing you can see out of your nearest window?",
     "Do you think Barbie is a negative role model for young girls?",
     "Have you ever needed an eye test?",
@@ -1752,7 +1747,7 @@ QUESTIONS = [
     "If you had one week to live and you had to marry someone in this room, who would it be?",
     "If you only had 24 hours to live and you could do anything with anyone in this room, who would it be and what would you do with that person?",
     "What's your biggest turn-on?",
-    "And biggest turn-off?",
+    "What's your biggest turn-off?",
     "Would you go out with me if I was the last person on earth?",
     "What's the most flirtatious thing you've ever done?",
     "What's the sexiest thing about [fill in the name of a person in the room]?",
@@ -1994,12 +1989,20 @@ QUESTIONS = [
     """What was the last song you sang?""",
     ]
 
+# Walk backwards through the QUESTIONS list so we don't repeat a question.
+# Once we fall off the front of the index, shuffle the list and start again.
+Q_INDEX = -1
+
 @bot_utils.command("grillme")
 def call(msg):
     """Ask the caller a fairly personal question"""
-    # BC I can...
-    if msg["d"]["author"]["id"] == '419882227355222016':
-        if random.getrandbits(1):
-            return
-    reply = "<@%s>: %s" % (msg["d"]["author"]["id"], random.choice(QUESTIONS))
+    global Q_INDEX
+    
+    if Q_INDEX < 0:
+        random.shuffle(QUESTIONS)
+        Q_INDEX = len(QUESTIONS)
+        bot_utils.reply(msg, "shuffling...")
+    
+    Q_INDEX -= 1
+    reply = "<@%s>: %s" % (msg["d"]["author"]["id"], QUESTIONS[Q_INDEX])
     bot_utils.reply(msg, reply)
