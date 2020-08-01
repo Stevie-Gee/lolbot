@@ -103,7 +103,7 @@ def websocket_connect(session):
     wsock = websocket.create_connection(
         ws_url + config.GATEWAY_VERSION,
         timeout=config.WS_TIMEOUT,
-        origin="https://discordapp.com",
+        origin="https://discord.com",
         sslopt={'ca_certs':requests.utils.DEFAULT_CA_BUNDLE_PATH},
         )
     logging.debug("Connected")

@@ -4,7 +4,7 @@
 
 * Create an app on discord
 * Create an "app bot user" for your user
-* Navigate here to add your bot to your server (make sure to replace [bot client ID] with the ID provided by discord): https://discordapp.com/oauth2/authorize?client_id=[bot client ID]&scope=bot
+* Navigate here to add your bot to your server (make sure to replace [bot client ID] with the ID provided by discord): https://discord.com/oauth2/authorize?client_id=[bot client ID]&scope=bot
 
 ## Then install the bot
 

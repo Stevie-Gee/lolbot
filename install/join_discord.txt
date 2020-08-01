@@ -1,4 +1,0 @@
-Create an app on discord
-Create an "app bot user" for your user
-Navigate here: https://discordapp.com/oauth2/authorize?client_id=<bot client ID>&scope=bot
-Authorised and add to your channel

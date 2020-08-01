@@ -65,7 +65,7 @@ LOGGING_CONFIG = {
 # You will probably never need to change these
 #######################################################################
 # Base URL for the REST api
-BASE_URL = "https://discordapp.com/api"
+BASE_URL = "https://discord.com/api"
 
 # What version of the gateway protocol do we speak?
 GATEWAY_VERSION = "?v=6&encoding=json"
