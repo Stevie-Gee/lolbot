@@ -13,7 +13,7 @@ def handle(msg):
         content = msg.get("d").get("content")
         # Respond to !ping with !pong
         if content == "!foo":
-            reply = "!bar"
+            reply = u"!bar"
         # If the !ping has content attached, match this content in the output
         elif content.startswith("!foo "):
             reply = u"!bar " + msg.get("d").get("content").split(' ', 1)[1]

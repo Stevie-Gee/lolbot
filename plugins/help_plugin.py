@@ -18,7 +18,7 @@ def call(msg):
             reply = "Unknown command"
     else:
         reply = "Available commands: {cc}%s.\nFor help with a particular command, type _{cc}help command_"
-        helplist = bot_utils.COMMANDS.keys()
+        helplist = list(bot_utils.COMMANDS.keys())
         helplist.sort()
         reply %= ', {cc}'.join(helplist)
     

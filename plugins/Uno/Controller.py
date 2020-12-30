@@ -8,8 +8,14 @@ from functools import wraps
 
 import bot_utils
 import config
-import Views
-import Models
+import sys
+
+if sys.version_info[0] == 2:
+    import Views
+    import Models
+else:
+    from . import Views
+    from . import Models
 
 # Global dictionary of Uno_Controller objects.
 # Games are accessed by concatenating server hostname and channel.

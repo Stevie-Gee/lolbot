@@ -3,9 +3,14 @@
 """
 from collections import defaultdict
 import re
+import sys
 
 import bot_utils
-import Models
+
+if sys.version_info[0] == 2:
+    import Models
+else:
+    from . import Models
 
 
 def card_format(hand, discard_pile=False):

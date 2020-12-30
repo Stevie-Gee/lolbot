@@ -19,7 +19,7 @@ def make_deck():
     # Build the list of denominations
     # Numbers 1-9, reverse, skip and draw2 occur twice
     denoms = ['reverse', 'skip', 'draw2']
-    denoms += range(1, 10)
+    denoms += list(range(1, 10))
     denoms *= 2
     
     # Zero only occurs once per colour

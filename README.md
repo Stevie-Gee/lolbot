@@ -15,7 +15,7 @@
   At minimum, you need to set BOT_TOKEN. You should probably add ADMINS too.
 
 * Install any required package dependencies with `python setup.py develop`
-* Note that lolbot is tested under python 2.7, and probably will not run under python 3.
+* Compatible with python 2.7 and 3.x
 
 ## To run the bot
 
