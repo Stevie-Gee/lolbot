@@ -9,8 +9,8 @@ from collections import namedtuple
 import json
 import logging
 import logging.config
-import Queue
 import signal
+import sys
 import threading
 import time
 
@@ -20,8 +20,16 @@ import websocket
 import config
 import plugin_handler
 
+# py2/3 compat
+if sys.version_info[0] == 2:
+    import Queue as queue
+    str = basestring
+else:
+    import queue
+
+
 # Global event queue, handled by main() loop
-MSGQUEUE = Queue.Queue()
+MSGQUEUE = queue.Queue()
 
 # Handle signals gracefully
 def sig_handler(signum, frame):
@@ -40,7 +48,7 @@ def clean_queue(msgqueue):
     while True:
         try:
             msgs.append(msgqueue.get(False))
-        except Queue.Empty:
+        except queue.Empty:
             break
     for msg in msgs:
         if msg not in badtypes:
@@ -62,7 +70,7 @@ def heartbeater(myqueue):
             interval = myqueue.get(startup)
             logging.debug("Updating heartbeat interval to %ss", interval)
             startup = False
-        except Queue.Empty:
+        except queue.Empty:
             pass
         time.sleep(interval)
         MSGQUEUE.put("HEARTBEAT")
@@ -88,7 +96,7 @@ def socket_send(sock, msg):
     complete Discord API message.
     """
     logging.debug("websocket send: %s", msg)
-    if not isinstance(msg, basestring):
+    if not isinstance(msg, str):
         msg = json.dumps(msg)
     with _SOCK_LOCK:
         sock.send(msg)
@@ -164,7 +172,7 @@ def main():
     wsock = namedtuple("WebSocket", "close")(close=lambda: None)
     
     # Start heartbeat loop
-    hb_queue = Queue.Queue()
+    hb_queue = queue.Queue()
     hb_thread = threading.Thread(target=heartbeater, args=[hb_queue])
     hb_thread.setDaemon(True)
     hb_thread.start()
@@ -177,7 +185,7 @@ def main():
             # after 2*hb_int of inactivity, so we don't expect to
             # reach this
             msg = MSGQUEUE.get(True, 9999)
-        except Queue.Empty:
+        except queue.Empty:
             # Expect to never reach here
             msg = "QUEUE_EMPTY"
         

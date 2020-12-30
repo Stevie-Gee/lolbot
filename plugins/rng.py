@@ -19,10 +19,10 @@ def call(msg):
         maxval = 100
     elif len(parts) == 2:
         minval = 1
-        maxval = long(parts[1])
+        maxval = int(parts[1])
     else:
-        minval = long(parts[1])
-        maxval = long(parts[2])
+        minval = int(parts[1])
+        maxval = int(parts[2])
     
     if minval > maxval:
         minval, maxval = maxval, minval

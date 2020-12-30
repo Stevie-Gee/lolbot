@@ -86,7 +86,7 @@ def command(cword):
 def handler(func):
     """Decorator to flag a function as handling all Discord events."""
     HANDLERS.add(func)
-    logging.info("Loaded handler '%s' from %s", func.__name__, func.func_globals.get("__file__"))
+    logging.info("Loaded handler '%s' from %s", func.__name__, func.__globals__.get("__file__"))
     return func
 
 def admin_only(func):

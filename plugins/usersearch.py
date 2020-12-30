@@ -8,6 +8,8 @@ config.py directives:
 * USERSEARCH_TIMEOUT: Timeout for https requests
 """
 
+from __future__ import division
+
 import re
 import requests
 import time
@@ -64,21 +66,21 @@ def command_search(msg):
 def prettyprint(uinfo):
     """Given a results dict from the site, return a nice string."""
     # Please note this method does not take leap years into account
-    joindate = long(uinfo['joindate'])
+    joindate = int(uinfo['joindate'])
     timestring = ''
     if time.time() > joindate:
-        joinlength = long(time.time()) - joindate
+        joinlength = int(time.time()) - joindate
     else:
-        joinlength = joindate - long(time.time())
+        joinlength = joindate - int(time.time())
         timestring = '-'
-    if joinlength / 31536000 != 0:
-        timestring += str(joinlength / 31536000)+'y '
-    if (joinlength / 86400)%365 != 0:
-        timestring += str((joinlength / 86400)%365)+'d '
-    if (joinlength / 3600)%24 != 0:
-        timestring += str((joinlength / 3600)%24)+'h '
-    if (joinlength / 60)%60 != 0:
-        timestring += str((joinlength / 60)%60)+'m '
+    if joinlength // 31536000 != 0:
+        timestring += str(joinlength // 31536000)+'y '
+    if (joinlength // 86400)%365 != 0:
+        timestring += str((joinlength // 86400)%365)+'d '
+    if (joinlength // 3600)%24 != 0:
+        timestring += str((joinlength // 3600)%24)+'h '
+    if (joinlength // 60)%60 != 0:
+        timestring += str((joinlength // 60)%60)+'m '
     if joinlength%60 != 0:
         timestring += str(joinlength%60)+'s '
     uinfo["timestring"] = timestring.strip()
@@ -137,7 +139,7 @@ def read_aliases(fname):
 def write_aliases(fname):
     """Write aliases to file."""
     with open(fname, 'w') as f:
-        for key, value in ALIASES.iteritems():
+        for key, value in ALIASES.items():
             f.write("%s %s\n" % (key, value))
 
 def search_nick(nick):
@@ -163,7 +165,7 @@ def search_nick(nick):
         raise ValueError("User not found")
     
     # result is a string returning various columns for the specified user
-    # Columns are separated by newlines, and key/value pairs are separated by a space
+    # Columns are separated by newlines, and key//value pairs are separated by a space
     uinfo = {}
     for line in result.split('\n'):
         key, uinfo[key] = line.split(' ', 1)
