@@ -16,6 +16,7 @@
 
 * Install any required package dependencies with `python setup.py develop`
 * Compatible with python 2.7 and 3.x
+* Rename `install/lolbot.systemd` to `/usr/lib/systemd/system/lolbot.service`, then run `systemctl enable lolbot` to start on boot
 
 ## To run the bot
 

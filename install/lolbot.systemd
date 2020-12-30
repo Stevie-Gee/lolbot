@@ -1,6 +1,9 @@
 [Unit]
 Description=Lolicit discord bot
-After=syslog.target network.target multi-user.target
+After=syslog.target network.target
+
+[Install]
+WantedBy=multi-user.target
 
 [Service]
 Type=simple
