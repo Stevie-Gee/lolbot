@@ -14,6 +14,7 @@ The handle() function will be called for every event received from Discord.
 import imp
 import logging
 import os
+import re
 import threading
 
 import bot_utils
@@ -46,13 +47,19 @@ def do_command(msg):
     # Normalise case
     content = content.lower()
     
+    # Check whether a dynamic content handler will take this
+    handled = False
+    for regex in bot_utils.RECOMMANDS:
+        if (re.match(regex, content)):
+            handled = True
+    
     # Ignore a lone command character
     if not content:
         pass
     # Is the command recognised? If so, call it
     elif content in bot_utils.COMMANDS:
         bot_utils.COMMANDS[content](msg)
-    else:
+    elif not handled:
         bot_utils.reply(msg, "Unknown command: _{0}{1}_.".format(config.COMMAND_CHAR, content))
 
 def handle(msg):

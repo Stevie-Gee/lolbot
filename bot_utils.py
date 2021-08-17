@@ -16,6 +16,10 @@ import config
 # List of all the !commands registered, and their handler functions
 COMMANDS = {}
 
+# Lets dynamic command handlers register a regex that they'll match
+# This is to stop plugin_handler complaining about unknown commands
+RECOMMANDS = []
+
 # List of all the event handlers registered
 HANDLERS = set()
 

@@ -1,6 +1,8 @@
 """Random number generator."""
 
 import random
+import re
+
 import bot_utils
 import config
 
@@ -33,28 +35,51 @@ def call(msg):
     else:
         bot_utils.reply(msg, "Your number is %s." % randno)
 
-@bot_utils.command("d4")
+
 @bot_utils.command("d6")
-@bot_utils.command("d8")
-@bot_utils.command("d10")
-@bot_utils.command("d12")
-@bot_utils.command("d20")
-@bot_utils.command("d100")
 def dicecmd(msg):
-    """Roll one or more dice (you can specify how many to roll)"""
+    """
+    Roll one or more dice, you can specify the number of sides and how many to roll.
+    e.g. to roll two D6s: !2d6"""
+    
+    # This is just a placeholder for the help command
+    return
+
+
+bot_utils.RECOMMANDS.append(r"(\d*)d(\d+)")
+@bot_utils.handler
+def all_dice_cmd(msg):
+    """
+    The real handler for arbitrary dice rolls
+    """
+    if msg.get("t") != "MESSAGE_CREATE":
+        return
     content = msg.get("d").get("content")
-    parts = content.split()
-    sides = int(parts[0].strip(config.COMMAND_CHAR).strip('dD'))
+    
+    if not content.startswith(config.COMMAND_CHAR):
+        return
+    
+    content = content.lstrip(config.COMMAND_CHAR)
+    match = re.match(r"(\d*)d(\d+)", content, re.I)
+    
+    if not match:
+        return
+    
     try:
-        count = int(parts[1])
+        sides = int(match.group(2))
+        if match.group(1):
+            count = int(match.group(1))
+        else:
+            count = 1
         if count > 100:
             bot_utils.reply(msg, "I don't have that many dice...")
             return
-    except ValueError:
-        bot_utils.reply(msg, "I can only roll a numeric number of dice")
+        elif count < 1:
+            bot_utils.reply(msg, "You rolled nothing!")
+            return
+    except:
+        # Badly-formed command, ignore it
         return
-    except IndexError:
-        count = 1
     
     rolls = [str(random.randint(1, sides)) for _ in range(count)]
     rollstr = "You rolled %s" % (", ".join(rolls))
