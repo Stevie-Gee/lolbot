@@ -15,7 +15,8 @@ def get_lewdness(subject):
     if '<@268286679893147649>' in subject or 'mina' in subject.lower():
         return weightedrand()
     else:
-        return random.randint(0,999) / 10
+        # Max lewdness is now 50%
+        return random.randint(0,500) / 10
 
 def weightedrand():
     """Randomise the min value sent to randint"""
