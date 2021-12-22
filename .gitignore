@@ -1,5 +1,6 @@
 *.pyc
 logs/
+venv/
 
 config.py
 plugins/usersearch_aliases.conf

@@ -98,14 +98,14 @@ def command_add(msg):
         return
     
     _, uid, nick = msg["d"].get("content").split(" ", 2)
-    if not re.match(r'\<\@(\d+)\>', uid):
+    uid = uid.strip('<!@>')
+    if not re.match(r'(\d+)', uid):
         bot_utils.reply(msg, "Invalid format")
         return
-    uid = uid[2:-1]
     
     ALIASES[uid] = nick
     write_aliases(config.USERSEARCH_ALIASES_FNAME)
-    bot_utils.reply(msg, "<@{0}> is now {1} on the site".format(uid, nick))
+    bot_utils.reply(msg, "<@!{0}> is now {1} on the site".format(uid, nick))
 
 @bot_utils.command("dealias")
 @bot_utils.admin_only
