@@ -92,7 +92,7 @@ def prettyprint(uinfo):
 @bot_utils.command("alias")
 @bot_utils.admin_only
 def command_add(msg):
-    """Add a new alias."""
+    """Add a new alias for another user."""
     if msg["d"].get("content").count(" ") < 2:
         bot_utils.reply(msg, "Invalid format")
         return
@@ -106,6 +106,22 @@ def command_add(msg):
     ALIASES[uid] = nick
     write_aliases(config.USERSEARCH_ALIASES_FNAME)
     bot_utils.reply(msg, "<@!{0}> is now {1} on the site".format(uid, nick))
+
+
+@bot_utils.command("selfalias")
+def command_add(msg):
+    """Add a new alias for yourself"""
+    if msg["d"].get("content").count(" ") < 1:
+        bot_utils.reply(msg, "Invalid format")
+        return
+    
+    _, nick = msg["d"].get("content").split(" ", 1)
+    uid = msg["d"].get("author", {}).get("id")
+    
+    ALIASES[uid] = nick
+    write_aliases(config.USERSEARCH_ALIASES_FNAME)
+    bot_utils.reply(msg, "<@!{0}> is now {1} on the site".format(uid, nick))
+
 
 @bot_utils.command("dealias")
 @bot_utils.admin_only
