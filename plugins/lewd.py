@@ -12,29 +12,32 @@ MEASUREMENTS = {}
 # Method for randomly generating a lewdness
 def get_lewdness(subject):
     """Measure lewdness of the subject, return a float between 0 and 100"""
-    if '<@268286679893147649>' in subject or 'mina' in subject.lower():
-        return weightedrand()
-    else:
-        # Max lewdness is now 60%
-        return random.randint(0,600) / 10
+    return weightedrand()
 
 def weightedrand():
-    """Randomise the min value sent to randint"""
+    """
+    Weighted random number generator.
+    
+    The first number determines the weighting of this row. If the weights
+    sum to 100, then this number is the likelihood in % of the row being chosen.
+    The second and third numbers are the range of possible values for this row.
+    """
     WEIGHTS = [
-        (0,     20),    # Min value, weight
-        (500,   40),
-        (700,   40),
+        (78, 0,     500),   # weight, minval, maxval
+        (15, 500,   750),
+        ( 5, 750,   900),
+        ( 2, 900,   999),
         ]
-    weightsum = sum(i[1] for i in WEIGHTS)
+    weightsum = sum(i[0] for i in WEIGHTS)
     idx = random.randint(0, weightsum)
     for weight in WEIGHTS:
-        if idx <= weight[1]:
+        if idx <= weight[0]:
             break
-        idx -= weight[1]
+        idx -= weight[0]
     else:
         raise RuntimeError("Bad index %s" % idx)
-    minrand = weight[0]
-    return random.randint(minrand,999) / 10
+    minrand, maxrand = weight[1:3]
+    return random.randint(minrand, maxrand) / 10
 
 @bot_utils.command("lewd")
 def doit(msg):
