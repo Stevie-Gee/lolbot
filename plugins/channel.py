@@ -33,3 +33,11 @@ def quitguild(msg):
     
     bot_utils.HTTP_SESSION.delete("/users/@me/guilds/{guildid}".format(guildid=guildid))
     bot_utils.reply(msg, "Done")
+
+@bot_utils.command("getguilds")
+@bot_utils.admin_only
+def getguilds(msg):
+    """Print the list of joined guilds"""
+    response = bot_utils.HTTP_SESSION.get("/users/@me/guilds")
+    for guild in response.json():
+        bot_utils.reply(msg, str(guild))
