@@ -20,3 +20,16 @@ def command(msg):
         userid = msg["d"]["channel_id"]
         reply = "Discord channel ID %s" % userid
     bot_utils.reply(msg, reply)
+
+@bot_utils.command("quitguild")
+@bot_utils.admin_only
+def quitguild(msg):
+    """Leave a guild (server)"""
+    content = msg.get("d").get("content")
+    if ' ' in content:
+        guildid = content.split(' ', 1)[1]
+    else:
+        bot_utils.reply(msg, "channel ID missing")
+    
+    bot_utils.HTTP_SESSION.delete("/users/@me/guilds/{guildid}".format(guildid=guildid))
+    bot_utils.reply(msg, "Done")
