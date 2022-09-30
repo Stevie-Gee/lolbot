@@ -14,8 +14,8 @@ setup(
     license='GPLv3',
     
     # Author details
-    author='S Tayck',
-    author_email='tayck@tayck.com',
+    author='sg',
+    author_email='',
     
     # Packages provided
     #packages=find_packages(),
