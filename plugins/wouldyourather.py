@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import random
 import bot_utils
+from plugins import grillme
 
 QUESTIONS = [
 "Would you rather: Lose the ability to speak? Or lose the ability to read?",
@@ -97,9 +98,7 @@ QUESTIONS = [
 "Would you rather: Take a 100% guaranteed $100,000? Or take a 50/50 chance at $1,000,000?",
 ]
 
-# Walk backwards through the QUESTIONS list so we don't repeat a question.
-# Once we fall off the front of the index, shuffle the list and start again.
-Q_INDEX = -1
+SHUFFLER = grillme.iter_shuffle(QUESTIONS)
 
 @bot_utils.command("wyr")
 def call(msg):
@@ -107,13 +106,5 @@ def call(msg):
     
     # "Vendetta is awesome he's so totally sexy too"
     # - Vendetta
-    
-    global Q_INDEX
-    
-    if Q_INDEX < 0:
-        random.shuffle(QUESTIONS)
-        Q_INDEX = len(QUESTIONS)
-    
-    Q_INDEX -= 1
-    reply = "<@%s>: %s" % (msg["d"]["author"]["id"], QUESTIONS[Q_INDEX])
+    reply = "<@%s>: %s" % (msg["d"]["author"]["id"], next(SHUFFLER))
     bot_utils.reply(msg, reply)

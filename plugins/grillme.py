@@ -1989,19 +1989,26 @@ QUESTIONS = [
     """What was the last song you sang?""",
     ]
 
-# Walk backwards through the QUESTIONS list so we don't repeat a question.
-# Once we fall off the front of the index, shuffle the list and start again.
-Q_INDEX = -1
+
+# TODO: move this to a library
+def iter_shuffle(src_list):
+    """
+    Endlessly yield rows from a shuffled version of the input list.
+    
+    Re-shuffle when the list runs out.
+    """
+    our_list = list(src_list)       # Copy list instead of shuffling the source
+    
+    while True:
+        random.SystemRandom().shuffle(our_list)
+        for item in our_list:
+            yield item
+
+
+SHUFFLER = iter_shuffle(QUESTIONS)
 
 @bot_utils.command("grillme")
 def call(msg):
     """Ask the caller a fairly personal question"""
-    global Q_INDEX
-    
-    if Q_INDEX < 0:
-        random.shuffle(QUESTIONS)
-        Q_INDEX = len(QUESTIONS)
-    
-    Q_INDEX -= 1
-    reply = "<@%s>: %s" % (msg["d"]["author"]["id"], QUESTIONS[Q_INDEX])
+    reply = "<@%s>: %s" % (msg["d"]["author"]["id"], next(SHUFFLER))
     bot_utils.reply(msg, reply)
